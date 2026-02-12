@@ -42,14 +42,18 @@ impl Default for CameraSettings {
 }
 
 fn main() {
-  let file = fs::read_to_string("temp/test.json").unwrap();
+  let file = fs::read_to_string("temp/test2.json").unwrap();
   let blueprint = serde_json::from_str::<Blueprint>(&file).unwrap();
   let save_file = SaveFile { blueprint };
 
   App::new()
+    .insert_resource(GlobalAmbientLight {
+      brightness: 500.0,
+      ..Default::default()
+    })
     .insert_resource(save_file)
     .init_resource::<CameraSettings>()
-    .add_plugins(DefaultPlugins)
+    .add_plugins((DefaultPlugins, MeshPickingPlugin))
     .add_plugins(bevy::pbr::wireframe::WireframePlugin::default())
     .insert_resource(bevy::pbr::wireframe::WireframeConfig {
       global: true,
@@ -73,15 +77,33 @@ fn setup(
     Transform::from_xyz(50.0, 50.0, 50.0).looking_at(Vec3::ZERO, Vec3::Y),
   ));
 
-  commands.spawn((
-    DirectionalLight {
-      illuminance: 1000.0,
-      ..Default::default()
-    },
-    Transform::from_xyz(100.0, 100.0, 100.0).looking_at(Vec3::ZERO, Dir3::Y),
+  // Mesh Primitives.
+  let tri_prism = Mesh::from(Extrusion::new(
+    Triangle2d::new(
+      Vec2::new(-0.5, -0.5),
+      Vec2::new(0.5, -0.5),
+      Vec2::new(0.5, 0.5),
+    ),
+    1.0,
   ));
+
+  // Meshes.
   let cube = meshes.add(Cuboid::new(1.0, 1.0, 1.0));
-  let blank = materials.add(Color::from(css::RED));
+  let type1prism = meshes.add(
+    tri_prism.clone().transformed_by(
+      Transform::default()
+        .with_rotation(Quat::from_rotation_y(90.0_f32.to_radians())),
+    ),
+  );
+  let type2prism = meshes.add(
+    tri_prism.clone().transformed_by(
+      Transform::default()
+        .with_rotation(Quat::from_rotation_y(-90.0_f32.to_radians())),
+    ),
+  );
+  let type6prism = meshes.add(tri_prism);
+
+  let blank = materials.add(Color::from(css::WHITE));
 
   for frame in save_file.blueprint.data.frames.iter() {
     commands.spawn((
@@ -93,23 +115,44 @@ fn setup(
         frame.frame_z as f32 * FRAME_SIZE + FRAME_SIZE * 0.5,
       )
       .with_scale(Vec3::splat(FRAME_SIZE)),
+      Pickable::IGNORE,
     ));
   }
 
-  for block in save_file.blueprint.data.blocks.iter() {
+  for (i, block) in save_file.blueprint.data.blocks.iter().enumerate() {
     let size_x = block.size_x as f32 + 1.0;
     let size_y = block.size_y as f32 + 1.0;
     let size_z = block.size_z as f32 + 1.0;
-    commands.spawn((
-      Mesh3d(cube.clone()),
-      MeshMaterial3d(blank.clone()),
-      Transform::from_xyz(
-        block.frame_x as f32 * FRAME_SIZE + block.pos_x as f32 + size_x * 0.5,
-        block.frame_y as f32 * FRAME_SIZE + block.pos_y as f32 + size_y * 0.5,
-        block.frame_z as f32 * FRAME_SIZE + block.pos_z as f32 + size_z * 0.5,
-      )
-      .with_scale(Vec3::new(size_x, size_y, size_z)),
-    ));
+
+    let mesh = match block.r#type {
+      0 => cube.clone(),
+      1 => type1prism.clone(),
+      2 => type2prism.clone(),
+      6 => type6prism.clone(),
+      255 => {
+        // Component
+        cube.clone()
+      }
+      _ => cube.clone(),
+    };
+    commands
+      .spawn((
+        Mesh3d(mesh),
+        MeshMaterial3d(blank.clone()),
+        Transform::from_xyz(
+          block.frame_x as f32 * FRAME_SIZE + block.pos_x as f32 + size_x * 0.5,
+          block.frame_y as f32 * FRAME_SIZE + block.pos_y as f32 + size_y * 0.5,
+          block.frame_z as f32 * FRAME_SIZE + block.pos_z as f32 + size_z * 0.5,
+        )
+        .with_scale(Vec3::new(size_x, size_y, size_z)),
+      ))
+      .observe(move |event: On<Pointer<Click>>, save_file: Res<SaveFile>| {
+        if event.button == PointerButton::Primary
+          && let Some(block) = save_file.blueprint.data.blocks.get(i)
+        {
+          info!("picked block: i\n{block:?}");
+        }
+      });
   }
 }
 
