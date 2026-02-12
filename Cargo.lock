@@ -181,6 +181,7 @@ name = "archean-editor"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "bevy_obj",
  "bit-vec",
  "serde",
  "serde_json",
@@ -1032,6 +1033,18 @@ name = "bevy_mikktspace"
 version = "0.17.0-dev"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7ef8e4b7e61dfe7719bb03c884dc270cd46a82efb40f93e9933b990c5c190c59"
+
+[[package]]
+name = "bevy_obj"
+version = "0.18.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5219a9a91cc87e44aa52376e33d7feb52cdbd71d65c60d548eaddb8b78b1471d"
+dependencies = [
+ "bevy",
+ "serde",
+ "thiserror 2.0.17",
+ "wobj",
+]
 
 [[package]]
 name = "bevy_pbr"
@@ -2760,9 +2773,9 @@ dependencies = [
 
 [[package]]
 name = "indexmap"
-version = "2.12.0"
+version = "2.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6717a8d2a5a929a1a2eb43a12812498ed141a0bcfb7e8f7844fbdbe4303bba9f"
+checksum = "7714e70437a7dc3ac8eb7e6f8df75fd8eb422675fc7678aff7364301092b1017"
 dependencies = [
  "equivalent",
  "hashbrown 0.16.1",
@@ -5462,9 +5475,9 @@ dependencies = [
 
 [[package]]
 name = "winnow"
-version = "0.7.13"
+version = "0.7.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "21a0236b59786fed61e2a80582dd500fe61f18b5dca67a4a067d0bc9039339cf"
+checksum = "5a5364e9d77fcdeeaa6062ced926ee3381faa2ee02d3eb83a5c27a8825540829"
 dependencies = [
  "memchr",
 ]
@@ -5474,6 +5487,17 @@ name = "wit-bindgen"
 version = "0.46.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f17a85883d4e6d00e8a97c586de764dabcc06133f7f1d55dce5cdc070ad7fe59"
+
+[[package]]
+name = "wobj"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "28b34b5fbb60f0273c065bfadca18e2decf9e1cac4da09e0ce61b799c05ee631"
+dependencies = [
+ "ahash",
+ "indexmap",
+ "winnow",
+]
 
 [[package]]
 name = "x11-dl"
