@@ -6,12 +6,7 @@ edition = "2024"
 [dependencies]
 bit-vec = "0.8.0"
 bevy = { version = "0.18.0", features = [
-  "default_app",
-  "default_platform",
   "3d",
-  "scene",
-  "picking",
-  "ui",
   "dynamic_linking",
 ], default-features = false }
 serde = { version = "1.0", features = ["derive"] }
