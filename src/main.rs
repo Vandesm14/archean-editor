@@ -62,6 +62,10 @@ fn main() {
       global: true,
       default_color: Color::from(css::GREEN),
     })
+    .insert_resource(GlobalAmbientLight {
+      brightness: 500.0,
+      ..Default::default()
+    })
     .add_systems(Startup, setup)
     .add_systems(Update, orbit)
     .run();
