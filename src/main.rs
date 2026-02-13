@@ -125,156 +125,119 @@ fn setup(
 
   // Row 1
   let type_01 = meshes.add(
-    slope.clone().transformed_by(
-      Transform::default()
-        .with_rotation(Quat::from_rotation_y(90.0_f32.to_radians())),
-    ),
+    slope
+      .clone()
+      .rotated_by(Quat::from_rotation_y(90.0_f32.to_radians())),
   );
   let type_02 = meshes.add(
-    slope.clone().transformed_by(
-      Transform::default()
-        .with_rotation(Quat::from_rotation_y(-90.0_f32.to_radians())),
-    ),
+    slope
+      .clone()
+      .rotated_by(Quat::from_rotation_y(-90.0_f32.to_radians())),
   );
-  let type_03 = meshes.add(slope.clone().transformed_by(
-    Transform::default().with_rotation(
-      Quat::from_rotation_y(-90.0_f32.to_radians())
-        * Quat::from_rotation_x(180.0_f32.to_radians()),
-    ),
+  let type_03 = meshes.add(slope.clone().rotated_by(
+    Quat::from_rotation_y(-90.0_f32.to_radians())
+      * Quat::from_rotation_x(180.0_f32.to_radians()),
   ));
-  let type_04 = meshes.add(slope.clone().transformed_by(
-    Transform::default().with_rotation(
-      Quat::from_rotation_y(90.0_f32.to_radians())
-        * Quat::from_rotation_x(180.0_f32.to_radians()),
-    ),
+  let type_04 = meshes.add(slope.clone().rotated_by(
+    Quat::from_rotation_y(90.0_f32.to_radians())
+      * Quat::from_rotation_x(180.0_f32.to_radians()),
   ));
-  let type_05 = meshes.add(slope.clone().transformed_by(
-    Transform::default().with_rotation(
-      Quat::from_rotation_y(180.0_f32.to_radians())
-        * Quat::from_rotation_x(-90.0_f32.to_radians()),
-    ),
+  let type_05 = meshes.add(slope.clone().rotated_by(
+    Quat::from_rotation_y(180.0_f32.to_radians())
+      * Quat::from_rotation_x(-90.0_f32.to_radians()),
   ));
   let type_06 = meshes.add(
-    slope.clone().transformed_by(
-      Transform::default()
-        .with_rotation(Quat::from_rotation_y(180.0_f32.to_radians())),
-    ),
+    slope
+      .clone()
+      .rotated_by(Quat::from_rotation_y(180.0_f32.to_radians())),
   );
-  let type_07 = meshes.add(slope.clone().transformed_by(
-    Transform::default().with_rotation(
-      Quat::from_rotation_y(180.0_f32.to_radians())
-        * Quat::from_rotation_x(90.0_f32.to_radians()),
-    ),
+  let type_07 = meshes.add(slope.clone().rotated_by(
+    Quat::from_rotation_y(180.0_f32.to_radians())
+      * Quat::from_rotation_x(90.0_f32.to_radians()),
   ));
   let type_08 = meshes.add(
-    slope.clone().transformed_by(
-      Transform::default()
-        .with_rotation(Quat::from_rotation_z(180.0_f32.to_radians())),
-    ),
+    slope
+      .clone()
+      .rotated_by(Quat::from_rotation_z(180.0_f32.to_radians())),
   );
   let type_09 = meshes.add(
-    slope.clone().transformed_by(
-      Transform::default()
-        .with_rotation(Quat::from_rotation_x(90.0_f32.to_radians())),
-    ),
+    slope
+      .clone()
+      .rotated_by(Quat::from_rotation_x(90.0_f32.to_radians())),
   );
   let type_10 = meshes.add(
-    slope.clone().transformed_by(
-      Transform::default()
-        .with_rotation(Quat::from_rotation_z(90.0_f32.to_radians())),
-    ),
+    slope
+      .clone()
+      .rotated_by(Quat::from_rotation_z(90.0_f32.to_radians())),
   );
   let type_11 = meshes.add(
-    slope.clone().transformed_by(
-      Transform::default()
-        .with_rotation(Quat::from_rotation_x(-90.0_f32.to_radians())),
-    ),
+    slope
+      .clone()
+      .rotated_by(Quat::from_rotation_x(-90.0_f32.to_radians())),
   );
   let type_12 = meshes.add(slope.clone());
   let type_13 = meshes.add(
-    corner.clone().transformed_by(
-      Transform::default()
-        .with_rotation(Quat::from_rotation_y(-90.0_f32.to_radians())),
-    ),
+    corner
+      .clone()
+      .rotated_by(Quat::from_rotation_y(-90.0_f32.to_radians())),
   );
   let type_14 = meshes.add(
-    corner.clone().transformed_by(
-      Transform::default()
-        .with_rotation(Quat::from_rotation_y(180.0_f32.to_radians())),
-    ),
+    corner
+      .clone()
+      .rotated_by(Quat::from_rotation_y(180.0_f32.to_radians())),
   );
-  let type_15 = meshes.add(corner.clone().transformed_by(
-    Transform::default().with_rotation(
-      Quat::from_rotation_y(180.0_f32.to_radians())
-        * Quat::from_rotation_z(-90.0_f32.to_radians()),
-    ),
+  let type_15 = meshes.add(corner.clone().rotated_by(
+    Quat::from_rotation_y(180.0_f32.to_radians())
+      * Quat::from_rotation_z(-90.0_f32.to_radians()),
   ));
-  let type_16 = meshes.add(corner.clone().transformed_by(
-    Transform::default().with_rotation(
-      Quat::from_rotation_y(-90.0_f32.to_radians())
-        * Quat::from_rotation_x(90.0_f32.to_radians()),
-    ),
+  let type_16 = meshes.add(corner.clone().rotated_by(
+    Quat::from_rotation_y(-90.0_f32.to_radians())
+      * Quat::from_rotation_x(90.0_f32.to_radians()),
   ));
   let type_17 = meshes.add(corner.clone());
   let type_18 = meshes.add(
-    corner.clone().transformed_by(
-      Transform::default()
-        .with_rotation(Quat::from_rotation_y(90.0_f32.to_radians())),
-    ),
+    corner
+      .clone()
+      .rotated_by(Quat::from_rotation_y(90.0_f32.to_radians())),
   );
   let type_19 = meshes.add(
-    corner.clone().transformed_by(
-      Transform::default()
-        .with_rotation(Quat::from_rotation_x(90.0_f32.to_radians())),
-    ),
+    corner
+      .clone()
+      .rotated_by(Quat::from_rotation_x(90.0_f32.to_radians())),
   );
   let type_20 = meshes.add(
-    corner.clone().transformed_by(
-      Transform::default()
-        .with_rotation(Quat::from_rotation_x(180.0_f32.to_radians())),
-    ),
+    corner
+      .clone()
+      .rotated_by(Quat::from_rotation_x(180.0_f32.to_radians())),
   );
   let type_21 = meshes.add(
-    pyramid.clone().transformed_by(
-      Transform::default()
-        .with_rotation(Quat::from_rotation_y(-90.0_f32.to_radians())),
-    ),
+    pyramid
+      .clone()
+      .rotated_by(Quat::from_rotation_y(-90.0_f32.to_radians())),
   );
-  let type_22 = meshes.add(pyramid.clone().transformed_by(
-    Transform::default().with_rotation(
-      Quat::from_rotation_x(-90.0_f32.to_radians())
-        * Quat::from_rotation_y(-90.0_f32.to_radians()),
-    ),
+  let type_22 = meshes.add(pyramid.clone().rotated_by(
+    Quat::from_rotation_x(-90.0_f32.to_radians())
+      * Quat::from_rotation_y(-90.0_f32.to_radians()),
   ));
-  let type_23 = meshes.add(pyramid.clone().transformed_by(
-    Transform::default().with_rotation(
-      Quat::from_rotation_x(180.0_f32.to_radians())
-        * Quat::from_rotation_y(-90.0_f32.to_radians()),
-    ),
+  let type_23 = meshes.add(pyramid.clone().rotated_by(
+    Quat::from_rotation_x(180.0_f32.to_radians())
+      * Quat::from_rotation_y(-90.0_f32.to_radians()),
   ));
-  let type_24 = meshes.add(pyramid.clone().transformed_by(
-    Transform::default().with_rotation(
-      Quat::from_rotation_x(90.0_f32.to_radians())
-        * Quat::from_rotation_y(-90.0_f32.to_radians()),
-    ),
+  let type_24 = meshes.add(pyramid.clone().rotated_by(
+    Quat::from_rotation_x(90.0_f32.to_radians())
+      * Quat::from_rotation_y(-90.0_f32.to_radians()),
   ));
-  let type_25 = meshes.add(pyramid.clone().transformed_by(
-    Transform::default().with_rotation(
-      Quat::from_rotation_x(-90.0_f32.to_radians())
-        * Quat::from_rotation_z(-90.0_f32.to_radians()),
-    ),
+  let type_25 = meshes.add(pyramid.clone().rotated_by(
+    Quat::from_rotation_x(-90.0_f32.to_radians())
+      * Quat::from_rotation_z(-90.0_f32.to_radians()),
   ));
-  let type_26 = meshes.add(pyramid.clone().transformed_by(
-    Transform::default().with_rotation(
-      Quat::from_rotation_x(180.0_f32.to_radians())
-        * Quat::from_rotation_z(-90.0_f32.to_radians()),
-    ),
+  let type_26 = meshes.add(pyramid.clone().rotated_by(
+    Quat::from_rotation_x(180.0_f32.to_radians())
+      * Quat::from_rotation_z(-90.0_f32.to_radians()),
   ));
-  let type_27 = meshes.add(pyramid.clone().transformed_by(
-    Transform::default().with_rotation(
-      Quat::from_rotation_x(90.0_f32.to_radians())
-        * Quat::from_rotation_z(-90.0_f32.to_radians()),
-    ),
+  let type_27 = meshes.add(pyramid.clone().rotated_by(
+    Quat::from_rotation_x(90.0_f32.to_radians())
+      * Quat::from_rotation_z(-90.0_f32.to_radians()),
   ));
   let type_28 = cube.clone();
   let type_29 = cube.clone();
