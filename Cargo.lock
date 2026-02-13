@@ -168,6 +168,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "anyhow"
+version = "1.0.101"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5f0e0fee31ef5ed1ba1316088939cea399010ed7731dba877ed44aeb407a75ea"
+
+[[package]]
 name = "approx"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -181,10 +187,9 @@ name = "archean-editor"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "bevy_common_assets",
  "bevy_obj",
- "bit-vec",
  "serde",
- "serde_json",
 ]
 
 [[package]]
@@ -559,6 +564,21 @@ dependencies = [
  "serde",
  "thiserror 2.0.17",
  "wgpu-types",
+]
+
+[[package]]
+name = "bevy_common_assets"
+version = "0.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ad51a6e9def88caadc4ce2a5670382d6ff19fa1e7e7af934326c5c0b376bdd9f"
+dependencies = [
+ "anyhow",
+ "bevy_app",
+ "bevy_asset",
+ "bevy_reflect",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.17",
 ]
 
 [[package]]
