@@ -5,16 +5,12 @@ use bevy::{
   math::Vec3,
   prelude::*,
 };
+use bevy_common_assets::json::JsonAssetPlugin;
 use bevy_obj::ObjPlugin;
 
 use std::{f32::consts::FRAC_PI_2, ops::Range};
 
 const FRAME_SIZE: f32 = 12.0;
-
-#[derive(Debug, Resource)]
-struct SaveFile {
-  blueprint: Blueprint,
-}
 
 #[derive(Debug, Resource)]
 struct CameraSettings {
@@ -123,21 +119,33 @@ impl FromWorld for BlockMap {
   }
 }
 
-fn main() {
-  let blueprint =
-    serde_json::from_str::<Blueprint>(include_str!("../temp/test2.json"))
-      .unwrap();
-  let save_file = SaveFile { blueprint };
+#[derive(Debug, Deref, Resource)]
+struct LoadedBlueprint(Handle<Blueprint>);
 
+impl FromWorld for LoadedBlueprint {
+  fn from_world(world: &mut World) -> Self {
+    let asset_server = world.resource::<AssetServer>();
+    Self(asset_server.load("blueprint.json"))
+  }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default, States)]
+enum BlueprintLoadState {
+  #[default]
+  Unloaded,
+  Loaded,
+}
+
+fn main() {
   App::new()
-    // .insert_resource(GlobalAmbientLight {
-    //   brightness: 50.0,
-    //   ..Default::default()
-    // })
-    .insert_resource(save_file)
-    .init_resource::<CameraSettings>()
-    .add_plugins((DefaultPlugins, MeshPickingPlugin, ObjPlugin))
+    .add_plugins((
+      DefaultPlugins,
+      MeshPickingPlugin,
+      ObjPlugin,
+      JsonAssetPlugin::<Blueprint>::new(&["json"]),
+    ))
     .add_plugins(bevy::pbr::wireframe::WireframePlugin::default())
+    .init_state::<BlueprintLoadState>()
     .insert_resource(bevy::pbr::wireframe::WireframeConfig {
       global: true,
       default_color: Color::from(css::GREEN),
@@ -146,19 +154,33 @@ fn main() {
       brightness: 500.0,
       ..Default::default()
     })
+    .init_resource::<CameraSettings>()
     .init_resource::<BlockMap>()
+    .init_resource::<LoadedBlueprint>()
     .add_systems(Startup, setup)
-    .add_systems(Update, orbit)
+    .add_systems(OnEnter(BlueprintLoadState::Loaded), setup_blueprint)
+    .add_systems(Update, (blueprint_load_unload, orbit, axes))
     .run();
 }
 
-/// set up a simple 3D scene
-fn setup(
-  mut commands: Commands,
-  mut materials: ResMut<Assets<StandardMaterial>>,
-  save_file: Res<SaveFile>,
-  block_map: Res<BlockMap>,
+fn blueprint_load_unload(
+  mut blueprint_state: ResMut<NextState<BlueprintLoadState>>,
+  mut events: MessageReader<AssetEvent<Blueprint>>,
 ) {
+  for event in events.read() {
+    match event {
+      AssetEvent::Modified { .. } | AssetEvent::Removed { .. } => {
+        blueprint_state.set(BlueprintLoadState::Unloaded)
+      }
+      AssetEvent::LoadedWithDependencies { .. } => {
+        blueprint_state.set(BlueprintLoadState::Loaded)
+      }
+      _ => {}
+    }
+  }
+}
+
+fn setup(mut commands: Commands) {
   commands
     .spawn((
       Name::new("Camera"),
@@ -173,11 +195,25 @@ fn setup(
       },
       Transform::from_xyz(10.0, 0.0, 10.0).looking_at(Vec3::ZERO, Vec3::Y),
     ));
+}
+
+/// # Panics
+///
+/// If `SaveFile.blueprint` is not fully loaded.
+fn setup_blueprint(
+  mut commands: Commands,
+  mut materials: ResMut<Assets<StandardMaterial>>,
+  blueprints: Res<Assets<Blueprint>>,
+  blueprint: Res<LoadedBlueprint>,
+  block_map: Res<BlockMap>,
+) {
+  let blueprint = blueprints.get(blueprint.id()).unwrap();
 
   let blank = materials.add(Color::from(css::WHITE));
 
-  for frame in save_file.blueprint.data.frames.iter() {
+  for frame in blueprint.data.frames.iter() {
     commands.spawn((
+      DespawnOnExit(BlueprintLoadState::Unloaded),
       Mesh3d(block_map.get(0)),
       Transform::from_xyz(
         frame.frame_x as f32 * FRAME_SIZE + FRAME_SIZE * 0.5,
@@ -189,13 +225,14 @@ fn setup(
     ));
   }
 
-  for (i, block) in save_file.blueprint.data.blocks.iter().enumerate() {
+  for (i, block) in blueprint.data.blocks.iter().enumerate() {
     let size_x = block.size_x as f32 + 1.0;
     let size_y = block.size_y as f32 + 1.0;
     let size_z = block.size_z as f32 + 1.0;
 
     commands
       .spawn((
+        DespawnOnExit(BlueprintLoadState::Unloaded),
         Mesh3d(block_map.get(block.r#type)),
         MeshMaterial3d(blank.clone()),
         Transform::from_xyz(
@@ -205,13 +242,22 @@ fn setup(
         )
         .with_scale(Vec3::new(size_x, size_y, size_z)),
       ))
-      .observe(move |event: On<Pointer<Click>>, save_file: Res<SaveFile>| {
-        if event.button == PointerButton::Primary {
-          let block = save_file.blueprint.data.blocks.get(i).unwrap();
-          info!("picked block: {i} with type {}", block.r#type);
-        }
-      });
+      .observe(
+        move |event: On<Pointer<Click>>,
+              blueprints: Res<Assets<Blueprint>>,
+              blueprint: Res<LoadedBlueprint>| {
+          if event.button == PointerButton::Primary {
+            let blueprint = blueprints.get(blueprint.id()).unwrap();
+            let block = blueprint.data.blocks.get(i).unwrap();
+            info!("picked block: {i} with type {}", block.r#type);
+          }
+        },
+      );
   }
+}
+
+fn axes(mut gizmos: Gizmos) {
+  gizmos.axes(Transform::default(), 1.0);
 }
 
 fn orbit(
