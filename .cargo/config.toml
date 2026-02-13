@@ -1,0 +1,4 @@
+[alias]
+dbuild = "build --features bevy/debug,bevy/dynamic_linking"
+dtest = "test --features bevy/debug,bevy/dynamic_linking"
+drun = "run --features bevy/debug,bevy/dynamic_linking"

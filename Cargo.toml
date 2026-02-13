@@ -11,4 +11,4 @@ serde = { version = "1", features = ["derive"] }
 [dependencies.bevy]
 version = "0.18.0"
 default-features = false
-features = ["3d", "debug", "dynamic_linking", "file_watcher"]
+features = ["3d", "file_watcher"]
