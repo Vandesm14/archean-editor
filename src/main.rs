@@ -1,4 +1,4 @@
-use archean_editor::Blueprint;
+use archean_editor::blueprint::Blueprint;
 use bevy::{
   color::palettes::css,
   input::mouse::{AccumulatedMouseMotion, AccumulatedMouseScroll},
