@@ -1,5 +1,4 @@
-use std::collections::HashMap;
-
+use bevy::{platform::collections::HashMap, prelude::*};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
@@ -161,12 +160,19 @@ pub struct Pipe {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CompositeBuild {
+  pub component: u8,
+  #[serde(rename = "slaveBuildId")]
+  pub slave_build_id: u8,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BlueprintData {
   pub alias: String,
   pub blocks: Vec<Block>,
   pub colors: Vec<ColorOrZero>,
   pub components: Vec<Component>,
-  pub composite_builds: Vec<()>,
+  pub composite_builds: Vec<CompositeBuild>,
   pub doors: Vec<()>,
   pub frames: Vec<Frame>,
   pub labels: Vec<Label>,
@@ -176,7 +182,7 @@ pub struct BlueprintData {
   pub version: u8,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Asset, TypePath)]
 pub struct Blueprint {
   pub author: String,
   pub box_max: Coords,
