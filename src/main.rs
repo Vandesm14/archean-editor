@@ -122,8 +122,23 @@ fn setup_ui(mut commands: Commands) {
 fn show_editor_ui(mut contexts: EguiContexts) -> Result {
   let ctx = contexts.ctx_mut()?;
 
-  egui::Window::new("Test").show(ctx, |ui| {
-    ui.label("Hello, world!");
+  // TODO: Read controls from wherever they end up being confugured.
+  egui::Window::new("Controls").show(ctx, |ui| {
+    ui.heading("Camera");
+    ui.label("<MiddleMouse> to rotate.");
+    ui.label("<Shift+MiddleMouse> to translate.");
+
+    ui.separator();
+
+    ui.heading("History");
+    ui.label("<Ctrl+Z> to undo.");
+    ui.label("<Ctrl+Shift+Z> or <Ctrl+Y> to redo.");
+
+    ui.separator();
+
+    ui.heading("Selection");
+    ui.label("<PrimaryMouse> to select hovered and deselect everything else.");
+    ui.label("<Shift+PrimaryMouse> to select hovered without deselecting everything else.");
   });
 
   Ok(())
