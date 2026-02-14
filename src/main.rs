@@ -259,7 +259,6 @@ fn orbit(
     if key_input.pressed(KeyCode::ShiftLeft)
       || key_input.pressed(KeyCode::ShiftRight)
     {
-      let (pitch, _roll, _yaw) = camera.rotation.to_euler(EulerRot::XYZ);
       let x = -camera.right() * delta.x * 0.1;
       let z = camera.up() * delta.y * 0.1;
       camera_settings.target += x + z;
