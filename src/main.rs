@@ -2,7 +2,7 @@ use core::{f32::consts::FRAC_PI_2, ops::Range};
 
 use archean_editor::{
   CommonAssets,
-  action::{ActionMessage, ActionPlugin},
+  action::{ActionHistory, ActionMessage, ActionPlugin},
   blueprint::{Blueprint, BlueprintPlugin, BlueprintState, LoadedBlueprint},
   select_entity, swap_to_deselected_material, swap_to_selected_material,
 };
@@ -79,7 +79,7 @@ fn main() -> AppExit {
     .add_systems(Startup, (setup_scene, setup_ui))
     .add_systems(EguiPrimaryContextPass, show_editor_ui)
     .add_systems(OnEnter(BlueprintState::Loaded), setup_blueprint)
-    .add_systems(Update, (undo_redo, orbit))
+    .add_systems(Update, (undo_redo, reload_blueprint, orbit))
     .run()
 }
 
@@ -131,14 +131,19 @@ fn show_editor_ui(mut contexts: EguiContexts) -> Result {
     ui.separator();
 
     ui.heading("History");
-    ui.label("<Ctrl+Z> to undo.");
-    ui.label("<Ctrl+Shift+Z> or <Ctrl+Y> to redo.");
+    ui.label("<Control+Z> to undo.");
+    ui.label("<Control+Shift+Z> or <Control+Y> to redo.");
 
     ui.separator();
 
     ui.heading("Selection");
     ui.label("<PrimaryMouse> to select hovered and deselect everything else.");
     ui.label("<Shift+PrimaryMouse> to select hovered without deselecting everything else.");
+
+    ui.separator();
+
+    ui.heading("Blueprint");
+    ui.label("<Control+R> to reload the blueprint file.");
   });
 
   Ok(())
@@ -212,6 +217,23 @@ fn undo_redo(
     // TODO: Make controls configurable.
     if keycode.just_pressed(KeyCode::KeyY) {
       messages.write(ActionMessage::Redo);
+    }
+  }
+}
+
+fn reload_blueprint(
+  keycode: Res<ButtonInput<KeyCode>>,
+  mut action_history: ResMut<ActionHistory>,
+  asset_server: Res<AssetServer>,
+  blueprint: Res<LoadedBlueprint>,
+) {
+  // TODO: Make controls configurable.
+  if keycode.pressed(KeyCode::ControlLeft)
+    && keycode.just_pressed(KeyCode::KeyR)
+  {
+    action_history.clear();
+    if let Some(path) = blueprint.path() {
+      asset_server.reload(path);
     }
   }
 }
