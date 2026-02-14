@@ -1,7 +1,7 @@
 pub mod action;
 pub mod blueprint;
 
-use bevy::prelude::*;
+use bevy::{color::palettes::css, prelude::*};
 
 use crate::action::{ActionMessage, CombinedAction, SelectionAction};
 
@@ -75,7 +75,7 @@ impl FromWorld for CommonAssets {
   fn from_world(world: &mut World) -> Self {
     let mut materials = world.resource_mut::<Assets<StandardMaterial>>();
     let unselected = materials.add(Color::WHITE);
-    let selected = materials.add(Color::BLACK);
+    let selected = materials.add(Color::from(css::BLUE));
 
     let asset_server = world.resource::<AssetServer>();
 
