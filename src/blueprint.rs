@@ -1,6 +1,52 @@
 use bevy::{platform::collections::HashMap, prelude::*};
 use serde::{Deserialize, Serialize};
 
+pub struct BlueprintPlugin;
+
+impl Plugin for BlueprintPlugin {
+  fn build(&self, app: &mut App) {
+    app
+      .init_asset::<Blueprint>()
+      .init_state::<BlueprintState>()
+      .init_resource::<LoadedBlueprint>()
+      .add_systems(PostUpdate, update_blueprint_state);
+  }
+}
+
+#[derive(Deref, DerefMut, Resource)]
+pub struct LoadedBlueprint(pub Handle<Blueprint>);
+
+impl FromWorld for LoadedBlueprint {
+  fn from_world(world: &mut World) -> Self {
+    let asset_server = world.resource::<AssetServer>();
+    Self(asset_server.load("blueprint.json"))
+  }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default, States)]
+pub enum BlueprintState {
+  #[default]
+  Unloaded,
+  Loaded,
+}
+
+pub fn update_blueprint_state(
+  mut blueprint_state: ResMut<NextState<BlueprintState>>,
+  mut events: MessageReader<AssetEvent<Blueprint>>,
+) {
+  for event in events.read() {
+    match event {
+      AssetEvent::Modified { .. } | AssetEvent::Removed { .. } => {
+        blueprint_state.set(BlueprintState::Unloaded)
+      }
+      AssetEvent::LoadedWithDependencies { .. } => {
+        blueprint_state.set(BlueprintState::Loaded)
+      }
+      _ => {}
+    }
+  }
+}
+
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct Coords {
   pub x: f64,

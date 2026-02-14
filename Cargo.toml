@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 bevy_common_assets = { version = "0.15.0", features = ["json"] }
+bevy_egui = "0.39.1"
 bevy_obj = "0.18.2"
 serde = { version = "1", features = ["derive"] }
 

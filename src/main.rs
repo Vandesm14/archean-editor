@@ -1,14 +1,22 @@
-use archean_editor::blueprint::Blueprint;
+use core::{f32::consts::FRAC_PI_2, ops::Range};
+
+use archean_editor::{
+  CommonAssets,
+  action::{ActionMessage, ActionPlugin},
+  blueprint::{Blueprint, BlueprintPlugin, BlueprintState, LoadedBlueprint},
+  select_entity, swap_to_deselected_material, swap_to_selected_material,
+};
 use bevy::{
+  camera::{CameraOutputMode, visibility::RenderLayers},
   color::palettes::css,
   input::mouse::{AccumulatedMouseMotion, AccumulatedMouseScroll},
-  math::Vec3,
+  pbr::wireframe::{Wireframe, WireframeConfig, WireframePlugin},
   prelude::*,
+  render::render_resource::BlendState,
 };
 use bevy_common_assets::json::JsonAssetPlugin;
+use bevy_egui::prelude::*;
 use bevy_obj::ObjPlugin;
-
-use std::{f32::consts::FRAC_PI_2, ops::Range};
 
 const FRAME_SIZE: f32 = 12.0;
 
@@ -40,172 +48,93 @@ impl Default for CameraSettings {
   }
 }
 
-#[derive(Resource)]
-struct BlockMap {
-  map: [Handle<Mesh>; 53],
-}
-
-impl BlockMap {
-  fn get(&self, r#type: u8) -> Handle<Mesh> {
-    self
-      .map
-      .get(r#type as usize)
-      .cloned()
-      .unwrap_or_else(|| self.map[0].clone())
-  }
-}
-
-impl FromWorld for BlockMap {
-  fn from_world(world: &mut World) -> Self {
-    let asset_server = world.resource::<AssetServer>();
-
-    Self {
-      map: [
-        asset_server.load("blocks/00.obj"),
-        asset_server.load("blocks/01.obj"),
-        asset_server.load("blocks/02.obj"),
-        asset_server.load("blocks/03.obj"),
-        asset_server.load("blocks/04.obj"),
-        asset_server.load("blocks/05.obj"),
-        asset_server.load("blocks/06.obj"),
-        asset_server.load("blocks/07.obj"),
-        asset_server.load("blocks/08.obj"),
-        asset_server.load("blocks/09.obj"),
-        asset_server.load("blocks/10.obj"),
-        asset_server.load("blocks/11.obj"),
-        asset_server.load("blocks/12.obj"),
-        asset_server.load("blocks/13.obj"),
-        asset_server.load("blocks/14.obj"),
-        asset_server.load("blocks/15.obj"),
-        asset_server.load("blocks/16.obj"),
-        asset_server.load("blocks/17.obj"),
-        asset_server.load("blocks/18.obj"),
-        asset_server.load("blocks/19.obj"),
-        asset_server.load("blocks/20.obj"),
-        asset_server.load("blocks/21.obj"),
-        asset_server.load("blocks/22.obj"),
-        asset_server.load("blocks/23.obj"),
-        asset_server.load("blocks/24.obj"),
-        asset_server.load("blocks/25.obj"),
-        asset_server.load("blocks/26.obj"),
-        asset_server.load("blocks/27.obj"),
-        asset_server.load("blocks/28.obj"),
-        asset_server.load("blocks/29.obj"),
-        asset_server.load("blocks/30.obj"),
-        asset_server.load("blocks/31.obj"),
-        asset_server.load("blocks/32.obj"),
-        asset_server.load("blocks/33.obj"),
-        asset_server.load("blocks/34.obj"),
-        asset_server.load("blocks/35.obj"),
-        asset_server.load("blocks/36.obj"),
-        asset_server.load("blocks/37.obj"),
-        asset_server.load("blocks/38.obj"),
-        asset_server.load("blocks/39.obj"),
-        asset_server.load("blocks/40.obj"),
-        asset_server.load("blocks/41.obj"),
-        asset_server.load("blocks/42.obj"),
-        asset_server.load("blocks/43.obj"),
-        asset_server.load("blocks/44.obj"),
-        asset_server.load("blocks/45.obj"),
-        asset_server.load("blocks/46.obj"),
-        asset_server.load("blocks/47.obj"),
-        asset_server.load("blocks/48.obj"),
-        asset_server.load("blocks/49.obj"),
-        asset_server.load("blocks/50.obj"),
-        asset_server.load("blocks/51.obj"),
-        asset_server.load("blocks/52.obj"),
-      ],
-    }
-  }
-}
-
-#[derive(Debug, Deref, Resource)]
-struct LoadedBlueprint(Handle<Blueprint>);
-
-impl FromWorld for LoadedBlueprint {
-  fn from_world(world: &mut World) -> Self {
-    let asset_server = world.resource::<AssetServer>();
-    Self(asset_server.load("blueprint.json"))
-  }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default, States)]
-enum BlueprintLoadState {
-  #[default]
-  Unloaded,
-  Loaded,
-}
-
-fn main() {
+fn main() -> AppExit {
   App::new()
     .add_plugins((
       DefaultPlugins,
       MeshPickingPlugin,
-      ObjPlugin,
-      JsonAssetPlugin::<Blueprint>::new(&["json"]),
+      WireframePlugin::default(),
     ))
-    .add_plugins(bevy::pbr::wireframe::WireframePlugin::default())
-    .init_state::<BlueprintLoadState>()
-    .insert_resource(bevy::pbr::wireframe::WireframeConfig {
-      global: true,
-      default_color: Color::from(css::GREEN),
+    .add_plugins(EguiPlugin::default())
+    .add_plugins((ObjPlugin, JsonAssetPlugin::<Blueprint>::new(&["json"])))
+    .add_plugins((ActionPlugin, BlueprintPlugin))
+    .insert_resource(MeshPickingSettings {
+      require_markers: true,
+      ..Default::default()
+    })
+    .insert_resource(WireframeConfig {
+      global: false,
+      ..Default::default()
     })
     .insert_resource(GlobalAmbientLight {
       brightness: 500.0,
       ..Default::default()
     })
+    .insert_resource(EguiGlobalSettings {
+      auto_create_primary_context: false,
+      ..Default::default()
+    })
+    .init_resource::<CommonAssets>()
     .init_resource::<CameraSettings>()
-    .init_resource::<BlockMap>()
-    .init_resource::<LoadedBlueprint>()
-    .add_systems(Startup, setup)
-    .add_systems(OnEnter(BlueprintLoadState::Loaded), setup_blueprint)
-    .add_systems(Update, (blueprint_load_unload, orbit, axes))
-    .run();
+    .add_systems(Startup, (setup_scene, setup_ui))
+    .add_systems(EguiPrimaryContextPass, show_editor_ui)
+    .add_systems(OnEnter(BlueprintState::Loaded), setup_blueprint)
+    .add_systems(Update, (undo_redo, orbit))
+    .run()
 }
 
-fn blueprint_load_unload(
-  mut blueprint_state: ResMut<NextState<BlueprintLoadState>>,
-  mut events: MessageReader<AssetEvent<Blueprint>>,
-) {
-  for event in events.read() {
-    match event {
-      AssetEvent::Modified { .. } | AssetEvent::Removed { .. } => {
-        blueprint_state.set(BlueprintLoadState::Unloaded)
-      }
-      AssetEvent::LoadedWithDependencies { .. } => {
-        blueprint_state.set(BlueprintLoadState::Loaded)
-      }
-      _ => {}
-    }
-  }
+fn setup_scene(mut commands: Commands) {
+  commands.spawn((
+    Camera3d::default(),
+    Transform::from_translation(Vec3::ONE * 10.0)
+      .looking_at(Vec3::ZERO, Dir3::Y),
+    MeshPickingCamera,
+  ));
+
+  commands.spawn((
+    DirectionalLight {
+      illuminance: 10000.0,
+      shadows_enabled: true,
+      ..Default::default()
+    },
+    Transform::from_translation(Vec3::ONE * 10.0)
+      .looking_at(Vec3::ZERO, Dir3::Y),
+  ));
 }
 
-fn setup(mut commands: Commands) {
-  commands
-    .spawn((
-      Name::new("Camera"),
-      Camera3d::default(),
-      Transform::from_xyz(50.0, 50.0, 50.0).looking_at(Vec3::ZERO, Vec3::Y),
-    ))
-    .with_child((
-      DirectionalLight {
-        illuminance: 5000.0,
-        shadows_enabled: true,
-        ..Default::default()
+fn setup_ui(mut commands: Commands) {
+  commands.spawn((
+    Camera2d,
+    PrimaryEguiContext,
+    RenderLayers::none(),
+    Camera {
+      order: 1,
+      output_mode: CameraOutputMode::Write {
+        blend_state: Some(BlendState::ALPHA_BLENDING),
+        clear_color: ClearColorConfig::None,
       },
-      Transform::from_xyz(10.0, 0.0, 10.0).looking_at(Vec3::ZERO, Vec3::Y),
-    ));
+      clear_color: ClearColorConfig::Custom(Color::NONE),
+      ..Default::default()
+    },
+  ));
 }
 
-/// # Panics
-///
-/// If `SaveFile.blueprint` is not fully loaded.
+fn show_editor_ui(mut contexts: EguiContexts) -> Result {
+  let ctx = contexts.ctx_mut()?;
+
+  egui::Window::new("Test").show(ctx, |ui| {
+    ui.label("Hello, world!");
+  });
+
+  Ok(())
+}
+
 fn setup_blueprint(
   mut commands: Commands,
   mut materials: ResMut<Assets<StandardMaterial>>,
   blueprints: Res<Assets<Blueprint>>,
   blueprint: Res<LoadedBlueprint>,
-  block_map: Res<BlockMap>,
+  common_assets: Res<CommonAssets>,
 ) {
   let blueprint = blueprints.get(blueprint.id()).unwrap();
 
@@ -213,27 +142,27 @@ fn setup_blueprint(
 
   for frame in blueprint.data.frames.iter() {
     commands.spawn((
-      DespawnOnExit(BlueprintLoadState::Unloaded),
-      Mesh3d(block_map.get(0)),
+      DespawnOnExit(BlueprintState::Unloaded),
+      Mesh3d(common_assets.block(0)),
       Transform::from_xyz(
         frame.frame_x as f32 * FRAME_SIZE + FRAME_SIZE * 0.5,
         frame.frame_y as f32 * FRAME_SIZE + FRAME_SIZE * 0.5,
         frame.frame_z as f32 * FRAME_SIZE + FRAME_SIZE * 0.5,
       )
       .with_scale(Vec3::splat(FRAME_SIZE)),
-      Pickable::IGNORE,
+      Wireframe,
     ));
   }
 
-  for (i, block) in blueprint.data.blocks.iter().enumerate() {
+  for block in blueprint.data.blocks.iter() {
     let size_x = block.size_x as f32 + 1.0;
     let size_y = block.size_y as f32 + 1.0;
     let size_z = block.size_z as f32 + 1.0;
 
     commands
       .spawn((
-        DespawnOnExit(BlueprintLoadState::Unloaded),
-        Mesh3d(block_map.get(block.r#type)),
+        DespawnOnExit(BlueprintState::Unloaded),
+        Mesh3d(common_assets.block(block.r#type)),
         MeshMaterial3d(blank.clone()),
         Transform::from_xyz(
           block.frame_x as f32 * FRAME_SIZE + block.pos_x as f32 + size_x * 0.5,
@@ -241,27 +170,39 @@ fn setup_blueprint(
           block.frame_z as f32 * FRAME_SIZE + block.pos_z as f32 + size_z * 0.5,
         )
         .with_scale(Vec3::new(size_x, size_y, size_z)),
+        Pickable::default(),
       ))
-      .observe(
-        move |event: On<Pointer<Click>>,
-              blueprints: Res<Assets<Blueprint>>,
-              blueprint: Res<LoadedBlueprint>| {
-          if event.button == PointerButton::Primary {
-            let blueprint = blueprints.get(blueprint.id()).unwrap();
-            let block = blueprint.data.blocks.get(i).unwrap();
-            info!("picked block: {i} with type {}", block.r#type);
-          }
-        },
-      );
+      .observe(select_entity)
+      .observe(swap_to_selected_material)
+      .observe(swap_to_deselected_material);
   }
 }
 
-fn axes(mut gizmos: Gizmos) {
-  gizmos.axes(Transform::default(), 1.0);
+fn undo_redo(
+  keycode: Res<ButtonInput<KeyCode>>,
+  mut messages: MessageWriter<ActionMessage>,
+) {
+  // TODO: Make controls configurable.
+  if keycode.pressed(KeyCode::ControlLeft) {
+    // TODO: Make controls configurable.
+    if keycode.just_pressed(KeyCode::KeyZ) {
+      // TODO: Make controls configurable.
+      messages.write(if keycode.pressed(KeyCode::ShiftLeft) {
+        ActionMessage::Redo
+      } else {
+        ActionMessage::Undo
+      });
+    }
+
+    // TODO: Make controls configurable.
+    if keycode.just_pressed(KeyCode::KeyY) {
+      messages.write(ActionMessage::Redo);
+    }
+  }
 }
 
 fn orbit(
-  mut camera: Single<&mut Transform, With<Camera>>,
+  mut camera: Single<&mut Transform, With<Camera3d>>,
   mut camera_settings: ResMut<CameraSettings>,
   mouse_motion: Res<AccumulatedMouseMotion>,
   mouse_buttons: Res<ButtonInput<MouseButton>>,
@@ -273,9 +214,11 @@ fn orbit(
   camera_settings.orbit_distance *=
     1.0 - time.delta_secs() * zoom_delta.y * 15.0;
 
-  if mouse_buttons.pressed(MouseButton::Left) {
+  // TODO: Make controls configurable.
+  if mouse_buttons.pressed(MouseButton::Middle) {
     let delta = mouse_motion.delta;
 
+    // TODO: Make controls configurable.
     if key_input.pressed(KeyCode::ShiftLeft)
       || key_input.pressed(KeyCode::ShiftRight)
     {
