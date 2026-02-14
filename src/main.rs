@@ -137,8 +137,8 @@ fn show_editor_ui(mut contexts: EguiContexts) -> Result {
     ui.separator();
 
     ui.heading("Selection");
-    ui.label("<PrimaryMouse> to select hovered and deselect everything else.");
-    ui.label("<Shift+PrimaryMouse> to select hovered without deselecting everything else.");
+    ui.label("<PrimaryMouse> to select hovered block.");
+    ui.label("<Shift+PrimaryMouse> to add hovered block to selection.");
 
     ui.separator();
 
