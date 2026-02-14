@@ -261,30 +261,20 @@ fn orbit(
     {
       let (pitch, _roll, _yaw) = camera.rotation.to_euler(EulerRot::XYZ);
       let x = -camera.right() * delta.x * 0.1;
-      let z = (camera.forward() * pitch.cos() + -camera.up() * pitch.sin())
-        * delta.y
-        * 0.1;
+      let z = camera.up() * delta.y * 0.1;
       camera_settings.target += x + z;
     } else {
-      // Mouse motion is one of the few inputs that should not be multiplied by delta time,
-      // as we are already receiving the full movement since the last frame was rendered. Multiplying
-      // by delta time here would make the movement slower that it should be.
       let delta_pitch = -delta.y * camera_settings.pitch_speed;
       let delta_yaw = -delta.x * camera_settings.yaw_speed;
 
-      // Obtain the existing pitch, yaw, and roll values from the transform.
       let (yaw, pitch, _) = camera.rotation.to_euler(EulerRot::YXZ);
 
-      // Establish the new yaw and pitch, preventing the pitch value from exceeding our limits.
       let pitch = (pitch + delta_pitch).clamp(
         camera_settings.pitch_range.start,
         camera_settings.pitch_range.end,
       );
       let yaw = yaw + delta_yaw;
       camera.rotation = Quat::from_euler(EulerRot::YXZ, yaw, pitch, 0.0);
-
-      // Adjust the translation to maintain the correct orientation toward the orbit target.
-      // In our example it's a static target, but this could easily be customized.
     }
   }
 
