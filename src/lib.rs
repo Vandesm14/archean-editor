@@ -57,8 +57,8 @@ pub struct Selected;
 #[derive(Resource)]
 pub struct CommonAssets {
   blocks: [Handle<Mesh>; 53],
-  unselected: Handle<StandardMaterial>,
-  selected: Handle<StandardMaterial>,
+  pub unselected: Handle<StandardMaterial>,
+  pub selected: Handle<StandardMaterial>,
 }
 
 impl CommonAssets {

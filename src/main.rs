@@ -8,7 +8,6 @@ use archean_editor::{
 };
 use bevy::{
   camera::{CameraOutputMode, visibility::RenderLayers},
-  color::palettes::css,
   input::mouse::{AccumulatedMouseMotion, AccumulatedMouseScroll},
   pbr::wireframe::{Wireframe, WireframeConfig, WireframePlugin},
   prelude::*,
@@ -83,7 +82,7 @@ fn main() -> AppExit {
     .run()
 }
 
-fn setup_scene(mut commands: Commands) {
+fn setup_scene(mut commands: Commands, common_assets: Res<CommonAssets>) {
   commands.spawn((
     Camera3d::default(),
     Transform::from_translation(Vec3::ONE * 10.0)
@@ -151,14 +150,11 @@ fn show_editor_ui(mut contexts: EguiContexts) -> Result {
 
 fn setup_blueprint(
   mut commands: Commands,
-  mut materials: ResMut<Assets<StandardMaterial>>,
   blueprints: Res<Assets<Blueprint>>,
   blueprint: Res<LoadedBlueprint>,
   common_assets: Res<CommonAssets>,
 ) {
   let blueprint = blueprints.get(blueprint.id()).unwrap();
-
-  let blank = materials.add(Color::from(css::WHITE));
 
   for frame in blueprint.data.frames.iter() {
     commands.spawn((
@@ -183,7 +179,7 @@ fn setup_blueprint(
       .spawn((
         DespawnOnExit(BlueprintState::Unloaded),
         Mesh3d(common_assets.block(block.r#type)),
-        MeshMaterial3d(blank.clone()),
+        MeshMaterial3d(common_assets.unselected.clone()),
         Transform::from_xyz(
           block.frame_x as f32 * FRAME_SIZE + block.pos_x as f32 + size_x * 0.5,
           block.frame_y as f32 * FRAME_SIZE + block.pos_y as f32 + size_y * 0.5,
