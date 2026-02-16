@@ -159,6 +159,16 @@ fn show_editor_ui(mut contexts: EguiContexts) -> Result {
 
     ui.separator();
 
+    ui.heading("Translation");
+    ui.label("<ArrowUp> to translate on the -Z axis.");
+    ui.label("<ArrowDown> to translate on the +Z axis.");
+    ui.label("<ArrowLeft> to translate on the -X axis.");
+    ui.label("<ArrowRight> to translate on the +X axis.");
+    ui.label("<PageUp> to translate on the +Y axis.");
+    ui.label("<PageDown> to translate on the -Y axis.");
+
+    ui.separator();
+
     ui.heading("Rotation");
     ui.label("<W> to rotate clockwise on the X axis.");
     ui.label("<S> to rotate counter-clockwise on the X axis.");
@@ -253,23 +263,29 @@ fn press_translate_key(
 ) {
   let mut translate_by = IVec3::ZERO;
 
+  // TODO: Make controls configurable.
   if key.just_pressed(KeyCode::ArrowRight) {
     translate_by = IVec3::X;
   }
+  // TODO: Make controls configurable.
   if key.just_pressed(KeyCode::ArrowLeft) {
     translate_by = IVec3::NEG_X;
   }
 
+  // TODO: Make controls configurable.
   if key.just_pressed(KeyCode::ArrowUp) {
     translate_by = IVec3::NEG_Z;
   }
+  // TODO: Make controls configurable.
   if key.just_pressed(KeyCode::ArrowDown) {
     translate_by = IVec3::Z;
   }
 
+  // TODO: Make controls configurable.
   if key.just_pressed(KeyCode::PageUp) {
     translate_by = IVec3::Y;
   }
+  // TODO: Make controls configurable.
   if key.just_pressed(KeyCode::PageDown) {
     translate_by = IVec3::NEG_Y;
   }
