@@ -1,8 +1,11 @@
 use core::{f32::consts::FRAC_PI_2, ops::Range};
 
 use archean_editor::{
-  CommonAssets,
-  action::{ActionHistory, ActionMessage, ActionPlugin},
+  CommonAssets, Selected,
+  action::{
+    Action, ActionHistory, ActionMessage, ActionPlugin, CombinedAction,
+    TranslateAction,
+  },
   blueprint::{Blueprint, BlueprintPlugin, BlueprintState, LoadedBlueprint},
   select_entity, swap_to_deselected_material, swap_to_selected_material,
 };
@@ -78,7 +81,10 @@ fn main() -> AppExit {
     .add_systems(Startup, (setup_scene, setup_ui))
     .add_systems(EguiPrimaryContextPass, show_editor_ui)
     .add_systems(OnEnter(BlueprintState::Loaded), setup_blueprint)
-    .add_systems(Update, (undo_redo, reload_blueprint, orbit))
+    .add_systems(
+      Update,
+      (undo_redo, reload_blueprint, orbit, press_translate_key),
+    )
     .run()
 }
 
@@ -191,6 +197,45 @@ fn setup_blueprint(
       .observe(select_entity)
       .observe(swap_to_selected_material)
       .observe(swap_to_deselected_material);
+  }
+}
+
+fn press_translate_key(
+  key: Res<ButtonInput<KeyCode>>,
+  selected: Query<Entity, With<Selected>>,
+  mut actions: MessageWriter<ActionMessage>,
+) {
+  let mut translate_by = Vec3::ZERO;
+  if key.just_pressed(KeyCode::ArrowRight) {
+    translate_by = Vec3::X;
+  }
+  if key.just_pressed(KeyCode::ArrowLeft) {
+    translate_by = Vec3::NEG_X;
+  }
+
+  if key.just_pressed(KeyCode::ArrowUp) {
+    translate_by = Vec3::NEG_Z;
+  }
+  if key.just_pressed(KeyCode::ArrowDown) {
+    translate_by = Vec3::Z;
+  }
+
+  if key.just_pressed(KeyCode::PageUp) {
+    translate_by = Vec3::Y;
+  }
+  if key.just_pressed(KeyCode::PageDown) {
+    translate_by = Vec3::NEG_Y;
+  }
+
+  if translate_by != Vec3::ZERO {
+    actions.write(ActionMessage::Push(Box::new(CombinedAction::from_iter(
+      selected.iter().map(|entity| {
+        Box::new(TranslateAction {
+          entity,
+          translate_by,
+        }) as _
+      }),
+    ))));
   }
 }
 

@@ -1,6 +1,9 @@
 use bevy::{platform::collections::HashMap, prelude::*};
 use serde::{Deserialize, Serialize};
 
+#[derive(Debug, Component)]
+pub struct BlockMarker;
+
 pub struct BlueprintPlugin;
 
 impl Plugin for BlueprintPlugin {
