@@ -1,4 +1,5 @@
 pub mod action;
+pub mod block;
 pub mod blueprint;
 
 use bevy::{color::palettes::css, prelude::*};

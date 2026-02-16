@@ -82,7 +82,7 @@ fn main() -> AppExit {
     .run()
 }
 
-fn setup_scene(mut commands: Commands, common_assets: Res<CommonAssets>) {
+fn setup_scene(mut commands: Commands) {
   commands.spawn((
     Camera3d::default(),
     Transform::from_translation(Vec3::ONE * 10.0)
@@ -193,6 +193,69 @@ fn setup_blueprint(
       .observe(swap_to_deselected_material);
   }
 }
+
+// fn setup_zoo(mut commands: Commands, common_assets: Res<CommonAssets>) {
+//   for (x, kind) in BlockKind::ALL.iter().copied().enumerate() {
+//     let x = x as f32 * 2.0;
+
+//     for offset in 0..kind.rotations() {
+//       let z = offset as f32 * 2.0;
+//       let block = Block::from_raw(kind.index() + offset).unwrap();
+
+//       commands
+//         .spawn((
+//           Mesh3d(common_assets.block(block.kind().index())),
+//           MeshMaterial3d(common_assets.unselected.clone()),
+//           Transform::from_xyz(x, 0.0, z).with_rotation(block.rotation()),
+//           Pickable::default(),
+//         ))
+//         .observe(select_entity)
+//         .observe(swap_to_selected_material)
+//         .observe(swap_to_deselected_material);
+//     }
+//   }
+
+//   for (x, kind) in BlockKind::ALL.iter().copied().enumerate() {
+//     let x = x as f32 * 2.0;
+//     let mut z = 0.0;
+
+//     let base_block = Block::from_raw(kind.index()).unwrap();
+
+//     for i in 0..4 {
+//       for j in 0..4 {
+//         for k in 0..4 {
+//           let mut block = base_block;
+
+//           for _ in 0..i {
+//             block = block.rotate_by(Direction::X);
+//           }
+
+//           for _ in 0..j {
+//             block = block.rotate_by(Direction::Y);
+//           }
+
+//           for _ in 0..k {
+//             block = block.rotate_by(Direction::Z);
+//           }
+
+//           commands
+//             .spawn((
+//               Mesh3d(common_assets.block(block.kind().index())),
+//               MeshMaterial3d(common_assets.unselected.clone()),
+//               Transform::from_xyz(12.0 + x, 0.0, z)
+//                 .with_rotation(block.rotation()),
+//               Pickable::default(),
+//             ))
+//             .observe(select_entity)
+//             .observe(swap_to_selected_material)
+//             .observe(swap_to_deselected_material);
+
+//           z += 2.0;
+//         }
+//       }
+//     }
+//   }
+// }
 
 fn undo_redo(
   keycode: Res<ButtonInput<KeyCode>>,
