@@ -1,6 +1,73 @@
 use bevy::prelude::*;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+use crate::CommonAssets;
+
+pub struct BlockPlugin;
+
+impl Plugin for BlockPlugin {
+  fn build(&self, app: &mut App) {
+    app.add_systems(PostUpdate, sync_block_transforms);
+  }
+}
+
+#[allow(clippy::type_complexity)]
+pub fn sync_block_transforms(
+  query: Query<
+    (&mut Transform, &Block, &BlockTransform),
+    Or<(Changed<Block>, Changed<BlockTransform>)>,
+  >,
+) {
+  for (mut transform, block, block_transform) in query {
+    transform.translation = block_transform.translation.as_vec3() * 0.5
+      + block_transform.scale.as_vec3() * 0.5;
+    transform.scale = block_transform.scale.as_vec3();
+    transform.rotation = block.rotation();
+  }
+}
+
+pub trait BlockCommandExt {
+  fn spawn_block(
+    &mut self,
+    common_assets: &CommonAssets,
+    block: Block,
+    transform: BlockTransform,
+  ) -> EntityCommands<'_>;
+}
+
+impl BlockCommandExt for Commands<'_, '_> {
+  fn spawn_block(
+    &mut self,
+    common_assets: &CommonAssets,
+    block: Block,
+    transform: BlockTransform,
+  ) -> EntityCommands<'_> {
+    let material = common_assets.unselected.clone();
+
+    let mesh = match block.kind() {
+      BlockKind::Cube => common_assets.cube.clone(),
+      BlockKind::Slope => common_assets.slope.clone(),
+      BlockKind::Corner => common_assets.corner.clone(),
+      BlockKind::Pyramid => common_assets.pyramid.clone(),
+      BlockKind::InvCorner => common_assets.inv_corner.clone(),
+    };
+
+    self.spawn((
+      block,
+      transform,
+      Transform::default(),
+      Mesh3d(mesh),
+      MeshMaterial3d(material),
+    ))
+  }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default, Component)]
+pub struct BlockTransform {
+  pub translation: IVec3,
+  pub scale: IVec3,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default, Component)]
 pub struct Block(u8);
 
 impl Block {

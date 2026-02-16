@@ -3,9 +3,9 @@ use core::{f32::consts::FRAC_PI_2, ops::Range};
 use archean_editor::{
   CommonAssets, Selected,
   action::{
-    Action, ActionHistory, ActionMessage, ActionPlugin, CombinedAction,
-    TranslateAction,
+    ActionHistory, ActionMessage, ActionPlugin, CombinedAction, TranslateAction,
   },
+  block::{Block, BlockCommandExt, BlockPlugin, BlockTransform},
   blueprint::{Blueprint, BlueprintPlugin, BlueprintState, LoadedBlueprint},
   select_entity, swap_to_deselected_material, swap_to_selected_material,
 };
@@ -20,7 +20,7 @@ use bevy_common_assets::json::JsonAssetPlugin;
 use bevy_egui::prelude::*;
 use bevy_obj::ObjPlugin;
 
-const FRAME_SIZE: f32 = 12.0;
+const FRAME_SIZE: i32 = 12;
 
 #[derive(Debug, Resource)]
 struct CameraSettings {
@@ -59,7 +59,7 @@ fn main() -> AppExit {
     ))
     .add_plugins(EguiPlugin::default())
     .add_plugins((ObjPlugin, JsonAssetPlugin::<Blueprint>::new(&["json"])))
-    .add_plugins((ActionPlugin, BlueprintPlugin))
+    .add_plugins((ActionPlugin, BlueprintPlugin, BlockPlugin))
     .insert_resource(MeshPickingSettings {
       require_markers: true,
       ..Default::default()
@@ -165,35 +165,36 @@ fn setup_blueprint(
   for frame in blueprint.data.frames.iter() {
     commands.spawn((
       DespawnOnExit(BlueprintState::Unloaded),
-      Mesh3d(common_assets.block(0)),
+      Mesh3d(common_assets.cube.clone()),
       Transform::from_xyz(
-        frame.frame_x as f32 * FRAME_SIZE + FRAME_SIZE * 0.5,
-        frame.frame_y as f32 * FRAME_SIZE + FRAME_SIZE * 0.5,
-        frame.frame_z as f32 * FRAME_SIZE + FRAME_SIZE * 0.5,
+        frame.frame_x as f32 * FRAME_SIZE as f32 + FRAME_SIZE as f32 * 0.5,
+        frame.frame_y as f32 * FRAME_SIZE as f32 + FRAME_SIZE as f32 * 0.5,
+        frame.frame_z as f32 * FRAME_SIZE as f32 + FRAME_SIZE as f32 * 0.5,
       )
-      .with_scale(Vec3::splat(FRAME_SIZE)),
+      .with_scale(Vec3::splat(FRAME_SIZE as f32)),
       Wireframe,
     ));
   }
 
   for block in blueprint.data.blocks.iter() {
-    let size_x = block.size_x as f32 + 1.0;
-    let size_y = block.size_y as f32 + 1.0;
-    let size_z = block.size_z as f32 + 1.0;
+    let size_x = block.size_x + 1;
+    let size_y = block.size_y + 1;
+    let size_z = block.size_z + 1;
 
     commands
-      .spawn((
-        DespawnOnExit(BlueprintState::Unloaded),
-        Mesh3d(common_assets.block(block.r#type)),
-        MeshMaterial3d(common_assets.unselected.clone()),
-        Transform::from_xyz(
-          block.frame_x as f32 * FRAME_SIZE + block.pos_x as f32 + size_x * 0.5,
-          block.frame_y as f32 * FRAME_SIZE + block.pos_y as f32 + size_y * 0.5,
-          block.frame_z as f32 * FRAME_SIZE + block.pos_z as f32 + size_z * 0.5,
-        )
-        .with_scale(Vec3::new(size_x, size_y, size_z)),
-        Pickable::default(),
-      ))
+      .spawn_block(
+        &common_assets,
+        Block::from_raw(block.r#type).unwrap_or(Block::CUBE),
+        BlockTransform {
+          translation: IVec3::new(
+            block.frame_x as i32 * FRAME_SIZE + 2 * block.pos_x as i32,
+            block.frame_y as i32 * FRAME_SIZE + 2 * block.pos_y as i32,
+            block.frame_z as i32 * FRAME_SIZE + 2 * block.pos_z as i32,
+          ),
+          scale: IVec3::new(size_x as i32, size_y as i32, size_z as i32),
+        },
+      )
+      .insert((DespawnOnExit(BlueprintState::Unloaded), Pickable::default()))
       .observe(select_entity)
       .observe(swap_to_selected_material)
       .observe(swap_to_deselected_material);
