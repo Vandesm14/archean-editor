@@ -206,29 +206,30 @@ fn press_translate_key(
   selected: Query<Entity, With<Selected>>,
   mut actions: MessageWriter<ActionMessage>,
 ) {
-  let mut translate_by = Vec3::ZERO;
+  let mut translate_by = IVec3::ZERO;
+
   if key.just_pressed(KeyCode::ArrowRight) {
-    translate_by = Vec3::X;
+    translate_by = IVec3::X;
   }
   if key.just_pressed(KeyCode::ArrowLeft) {
-    translate_by = Vec3::NEG_X;
+    translate_by = IVec3::NEG_X;
   }
 
   if key.just_pressed(KeyCode::ArrowUp) {
-    translate_by = Vec3::NEG_Z;
+    translate_by = IVec3::NEG_Z;
   }
   if key.just_pressed(KeyCode::ArrowDown) {
-    translate_by = Vec3::Z;
+    translate_by = IVec3::Z;
   }
 
   if key.just_pressed(KeyCode::PageUp) {
-    translate_by = Vec3::Y;
+    translate_by = IVec3::Y;
   }
   if key.just_pressed(KeyCode::PageDown) {
-    translate_by = Vec3::NEG_Y;
+    translate_by = IVec3::NEG_Y;
   }
 
-  if translate_by != Vec3::ZERO {
+  if translate_by != IVec3::ZERO {
     actions.write(ActionMessage::Push(Box::new(CombinedAction::from_iter(
       selected.iter().map(|entity| {
         Box::new(TranslateAction {

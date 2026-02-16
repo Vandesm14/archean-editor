@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{Selected, blueprint::BlockMarker};
+use crate::{Selected, block::BlockTransform};
 
 #[derive(Default)]
 pub struct ActionPlugin;
@@ -199,15 +199,15 @@ impl Action for CombinedAction {
 #[derive(Debug)]
 pub struct TranslateAction {
   pub entity: Entity,
-  pub translate_by: Vec3,
+  pub translate_by: IVec3,
 }
 
 impl Action for TranslateAction {
   fn redo(&self, world: &mut World) -> ActionResult {
-    let mut blocks = world.query::<&mut Transform>();
+    let mut blocks = world.query::<&mut BlockTransform>();
     match blocks.get_mut(world, self.entity) {
       Ok(mut block) => {
-        block.translation += self.translate_by;
+        block.translation += self.translate_by * 2;
         ActionResult::Success
       }
       Err(err) => {
@@ -218,10 +218,11 @@ impl Action for TranslateAction {
   }
 
   fn undo(&self, world: &mut World) -> ActionResult {
-    let mut blocks = world.query::<&mut Transform>();
+    let mut blocks = world.query::<&mut BlockTransform>();
+
     match blocks.get_mut(world, self.entity) {
       Ok(mut block) => {
-        block.translation -= self.translate_by;
+        block.translation -= self.translate_by * 2;
         ActionResult::Success
       }
       Err(err) => {
