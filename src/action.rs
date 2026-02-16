@@ -1,6 +1,9 @@
 use bevy::prelude::*;
 
-use crate::{Selected, block::BlockTransform};
+use crate::{
+  Selected,
+  block::{Block, BlockTransform, Direction},
+};
 
 #[derive(Default)]
 pub struct ActionPlugin;
@@ -230,5 +233,36 @@ impl Action for TranslateAction {
         ActionResult::Failed
       }
     }
+  }
+}
+
+pub struct RotateAction {
+  pub entity: Entity,
+  pub axis: Direction,
+}
+
+impl Action for RotateAction {
+  fn redo(&self, world: &mut World) -> ActionResult {
+    let mut blocks = world.query::<&mut Block>();
+
+    let Ok(mut block) = blocks.get_mut(world, self.entity) else {
+      warn!("Could not find entity {} with Block component", self.entity);
+      return ActionResult::Failed;
+    };
+
+    *block = block.rotate_by(self.axis);
+    ActionResult::Success
+  }
+
+  fn undo(&self, world: &mut World) -> ActionResult {
+    let mut blocks = world.query::<&mut Block>();
+
+    let Ok(mut block) = blocks.get_mut(world, self.entity) else {
+      warn!("Could not find entity {} with Block component", self.entity);
+      return ActionResult::Failed;
+    };
+
+    *block = block.rotate_by(self.axis.inverse());
+    ActionResult::Success
   }
 }

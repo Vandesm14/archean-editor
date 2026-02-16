@@ -3,9 +3,10 @@ use core::{f32::consts::FRAC_PI_2, ops::Range};
 use archean_editor::{
   CommonAssets, Selected,
   action::{
-    ActionHistory, ActionMessage, ActionPlugin, CombinedAction, TranslateAction,
+    ActionHistory, ActionMessage, ActionPlugin, CombinedAction, RotateAction,
+    TranslateAction,
   },
-  block::{Block, BlockCommandExt, BlockPlugin, BlockTransform},
+  block::{Block, BlockCommandExt, BlockPlugin, BlockTransform, Direction},
   blueprint::{Blueprint, BlueprintPlugin, BlueprintState, LoadedBlueprint},
   select_entity, swap_to_deselected_material, swap_to_selected_material,
 };
@@ -83,7 +84,13 @@ fn main() -> AppExit {
     .add_systems(OnEnter(BlueprintState::Loaded), setup_blueprint)
     .add_systems(
       Update,
-      (undo_redo, reload_blueprint, orbit, press_translate_key),
+      (
+        undo_redo,
+        reload_blueprint,
+        orbit,
+        press_translate_key,
+        rotate_blocks,
+      ),
     )
     .run()
 }
@@ -141,14 +148,24 @@ fn show_editor_ui(mut contexts: EguiContexts) -> Result {
 
     ui.separator();
 
+    ui.heading("Blueprint");
+    ui.label("<Control+R> to reload the blueprint file.");
+
+    ui.separator();
+
     ui.heading("Selection");
     ui.label("<PrimaryMouse> to select hovered block.");
     ui.label("<Shift+PrimaryMouse> to add hovered block to selection.");
 
     ui.separator();
 
-    ui.heading("Blueprint");
-    ui.label("<Control+R> to reload the blueprint file.");
+    ui.heading("Rotation");
+    ui.label("<W> to rotate clockwise on the X axis.");
+    ui.label("<S> to rotate counter-clockwise on the X axis.");
+    ui.label("<A> to rotate clockwise on the Z axis.");
+    ui.label("<D> to rotate counter-clockwise on the Z axis.");
+    ui.label("<Q> to rotate clockwise on the Y axis.");
+    ui.label("<E> to rotate counter-clockwise on the Y axis.");
   });
 
   Ok(())
@@ -199,6 +216,34 @@ fn setup_blueprint(
       .observe(swap_to_selected_material)
       .observe(swap_to_deselected_material);
   }
+}
+
+fn rotate_blocks(
+  keyboard: Res<ButtonInput<KeyCode>>,
+  query: Query<Entity, With<Selected>>,
+  mut messages: MessageWriter<ActionMessage>,
+) {
+  let axis = match () {
+    // TODO: Make controls configurable.
+    () if keyboard.just_pressed(KeyCode::KeyW) => Direction::NegX,
+    // TODO: Make controls configurable.
+    () if keyboard.just_pressed(KeyCode::KeyS) => Direction::X,
+    // TODO: Make controls configurable.
+    () if keyboard.just_pressed(KeyCode::KeyA) => Direction::NegZ,
+    // TODO: Make controls configurable.
+    () if keyboard.just_pressed(KeyCode::KeyD) => Direction::Z,
+    // TODO: Make controls configurable.
+    () if keyboard.just_pressed(KeyCode::KeyQ) => Direction::NegY,
+    // TODO: Make controls configurable.
+    () if keyboard.just_pressed(KeyCode::KeyE) => Direction::Y,
+    _ => return,
+  };
+
+  messages.write(ActionMessage::Push(Box::new(CombinedAction::from_iter(
+    query
+      .iter()
+      .map(|entity| Box::new(RotateAction { entity, axis }) as _),
+  ))));
 }
 
 fn press_translate_key(
