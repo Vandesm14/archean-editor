@@ -1,9 +1,8 @@
+use core::f32::consts::FRAC_PI_2;
+
 use bevy::prelude::*;
 
-use crate::{
-  Selected,
-  block::{Block, BlockTransform, Direction},
-};
+use crate::Selected;
 
 #[derive(Default)]
 pub struct ActionPlugin;
@@ -207,10 +206,10 @@ pub struct TranslateAction {
 
 impl Action for TranslateAction {
   fn redo(&self, world: &mut World) -> ActionResult {
-    let mut blocks = world.query::<&mut BlockTransform>();
+    let mut blocks = world.query::<&mut Transform>();
     match blocks.get_mut(world, self.entity) {
       Ok(mut block) => {
-        block.translation += self.translate_by * 2;
+        block.translation += self.translate_by.as_vec3();
         ActionResult::Success
       }
       Err(err) => {
@@ -221,11 +220,11 @@ impl Action for TranslateAction {
   }
 
   fn undo(&self, world: &mut World) -> ActionResult {
-    let mut blocks = world.query::<&mut BlockTransform>();
+    let mut blocks = world.query::<&mut Transform>();
 
     match blocks.get_mut(world, self.entity) {
-      Ok(mut block) => {
-        block.translation -= self.translate_by * 2;
+      Ok(mut transform) => {
+        transform.translation -= self.translate_by.as_vec3();
         ActionResult::Success
       }
       Err(err) => {
@@ -238,31 +237,41 @@ impl Action for TranslateAction {
 
 pub struct RotateAction {
   pub entity: Entity,
-  pub axis: Direction,
+  pub rotate_by: IVec3,
 }
 
 impl Action for RotateAction {
   fn redo(&self, world: &mut World) -> ActionResult {
-    let mut blocks = world.query::<&mut Block>();
+    let mut query = world.query::<&mut Transform>();
 
-    let Ok(mut block) = blocks.get_mut(world, self.entity) else {
+    let Ok(mut transform) = query.get_mut(world, self.entity) else {
       warn!("Could not find entity {} with Block component", self.entity);
       return ActionResult::Failed;
     };
 
-    *block = block.rotate_by(self.axis);
+    let rotate_by = self.rotate_by.as_vec3();
+
+    transform.rotate_x(FRAC_PI_2 * rotate_by.x);
+    transform.rotate_y(FRAC_PI_2 * rotate_by.y);
+    transform.rotate_z(FRAC_PI_2 * rotate_by.z);
+
     ActionResult::Success
   }
 
   fn undo(&self, world: &mut World) -> ActionResult {
-    let mut blocks = world.query::<&mut Block>();
+    let mut query = world.query::<&mut Transform>();
 
-    let Ok(mut block) = blocks.get_mut(world, self.entity) else {
+    let Ok(mut transform) = query.get_mut(world, self.entity) else {
       warn!("Could not find entity {} with Block component", self.entity);
       return ActionResult::Failed;
     };
 
-    *block = block.rotate_by(self.axis.inverse());
+    let rotate_by = self.rotate_by.as_vec3();
+
+    transform.rotate_x(-FRAC_PI_2 * rotate_by.x);
+    transform.rotate_y(-FRAC_PI_2 * rotate_by.y);
+    transform.rotate_z(-FRAC_PI_2 * rotate_by.z);
+
     ActionResult::Success
   }
 }

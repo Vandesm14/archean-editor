@@ -57,11 +57,6 @@ pub struct Selected;
 
 #[derive(Resource)]
 pub struct CommonAssets {
-  pub cube: Handle<Mesh>,
-  pub slope: Handle<Mesh>,
-  pub corner: Handle<Mesh>,
-  pub pyramid: Handle<Mesh>,
-  pub inv_corner: Handle<Mesh>,
   pub unselected: Handle<StandardMaterial>,
   pub selected: Handle<StandardMaterial>,
 }
@@ -73,20 +68,7 @@ impl FromWorld for CommonAssets {
     let unselected = materials.add(Color::WHITE);
     let selected = materials.add(Color::from(css::BLUE));
 
-    let asset_server = world.resource::<AssetServer>();
-
-    let cube = asset_server.load("blocks/cube.obj");
-    let slope = asset_server.load("blocks/slope.obj");
-    let corner = asset_server.load("blocks/corner.obj");
-    let pyramid = asset_server.load("blocks/pyramid.obj");
-    let inv_corner = asset_server.load("blocks/inv_corner.obj");
-
     Self {
-      cube,
-      slope,
-      corner,
-      pyramid,
-      inv_corner,
       unselected,
       selected,
     }

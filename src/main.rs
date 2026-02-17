@@ -6,7 +6,7 @@ use archean_editor::{
     ActionHistory, ActionMessage, ActionPlugin, CombinedAction, RotateAction,
     TranslateAction,
   },
-  block::{Block, BlockCommandExt, BlockPlugin, BlockTransform, Direction},
+  block::{Block, BlockAssets, BlockPlugin, FRAME_SIZE_VEC3},
   blueprint::{Blueprint, BlueprintPlugin, BlueprintState, LoadedBlueprint},
   select_entity, swap_to_deselected_material, swap_to_selected_material,
 };
@@ -20,8 +20,6 @@ use bevy::{
 use bevy_common_assets::json::JsonAssetPlugin;
 use bevy_egui::prelude::*;
 use bevy_obj::ObjPlugin;
-
-const FRAME_SIZE: i32 = 12;
 
 #[derive(Debug, Resource)]
 struct CameraSettings {
@@ -170,12 +168,12 @@ fn show_editor_ui(mut contexts: EguiContexts) -> Result {
     ui.separator();
 
     ui.heading("Rotation");
-    ui.label("<W> to rotate clockwise on the X axis.");
-    ui.label("<S> to rotate counter-clockwise on the X axis.");
+    ui.label("<W> to rotate counter-clockwise on the X axis.");
+    ui.label("<S> to rotate clockwise on the X axis.");
     ui.label("<A> to rotate clockwise on the Z axis.");
     ui.label("<D> to rotate counter-clockwise on the Z axis.");
-    ui.label("<Q> to rotate clockwise on the Y axis.");
-    ui.label("<E> to rotate counter-clockwise on the Y axis.");
+    ui.label("<Q> to rotate counter-clockwise on the Y axis.");
+    ui.label("<E> to rotate clockwise on the Y axis.");
   });
 
   Ok(())
@@ -185,6 +183,7 @@ fn setup_blueprint(
   mut commands: Commands,
   blueprints: Res<Assets<Blueprint>>,
   blueprint: Res<LoadedBlueprint>,
+  block_assets: Res<BlockAssets>,
   common_assets: Res<CommonAssets>,
 ) {
   let blueprint = blueprints.get(blueprint.id()).unwrap();
@@ -192,36 +191,44 @@ fn setup_blueprint(
   for frame in blueprint.data.frames.iter() {
     commands.spawn((
       DespawnOnExit(BlueprintState::Unloaded),
-      Mesh3d(common_assets.cube.clone()),
+      Mesh3d(block_assets.mesh(0)),
       Transform::from_xyz(
-        frame.frame_x as f32 * FRAME_SIZE as f32 + FRAME_SIZE as f32 * 0.5,
-        frame.frame_y as f32 * FRAME_SIZE as f32 + FRAME_SIZE as f32 * 0.5,
-        frame.frame_z as f32 * FRAME_SIZE as f32 + FRAME_SIZE as f32 * 0.5,
+        frame.frame_x as f32 * FRAME_SIZE_VEC3.x + FRAME_SIZE_VEC3.x * 0.5,
+        frame.frame_y as f32 * FRAME_SIZE_VEC3.y + FRAME_SIZE_VEC3.y * 0.5,
+        frame.frame_z as f32 * FRAME_SIZE_VEC3.z + FRAME_SIZE_VEC3.z * 0.5,
       )
-      .with_scale(Vec3::splat(FRAME_SIZE as f32)),
+      .with_scale(FRAME_SIZE_VEC3),
       Wireframe,
     ));
   }
 
   for block in blueprint.data.blocks.iter() {
-    let size_x = block.size_x + 1;
-    let size_y = block.size_y + 1;
-    let size_z = block.size_z + 1;
+    let scale = Vec3::new(
+      block.size_x as f32 + 1.0,
+      block.size_y as f32 + 1.0,
+      block.size_z as f32 + 1.0,
+    );
 
     commands
-      .spawn_block(
-        &common_assets,
-        Block::from_raw(block.r#type).unwrap_or(Block::CUBE),
-        BlockTransform {
-          translation: IVec3::new(
-            block.frame_x as i32 * FRAME_SIZE + block.pos_x as i32,
-            block.frame_y as i32 * FRAME_SIZE + block.pos_y as i32,
-            block.frame_z as i32 * FRAME_SIZE + block.pos_z as i32,
-          ),
-          scale: IVec3::new(size_x as i32, size_y as i32, size_z as i32),
-        },
-      )
-      .insert((DespawnOnExit(BlueprintState::Unloaded), Pickable::default()))
+      .spawn((
+        Block,
+        Mesh3d(block_assets.mesh(block.r#type)),
+        MeshMaterial3d(common_assets.unselected.clone()),
+        Transform::from_xyz(
+          block.frame_x as f32 * FRAME_SIZE_VEC3.x
+            + block.pos_x as f32
+            + scale.x * 0.5,
+          block.frame_y as f32 * FRAME_SIZE_VEC3.y
+            + block.pos_y as f32
+            + scale.y * 0.5,
+          block.frame_z as f32 * FRAME_SIZE_VEC3.z
+            + block.pos_z as f32
+            + scale.z * 0.5,
+        )
+        .with_scale(scale),
+        DespawnOnExit(BlueprintState::Unloaded),
+        Pickable::default(),
+      ))
       .observe(select_entity)
       .observe(swap_to_selected_material)
       .observe(swap_to_deselected_material);
@@ -233,26 +240,26 @@ fn rotate_blocks(
   query: Query<Entity, With<Selected>>,
   mut messages: MessageWriter<ActionMessage>,
 ) {
-  let axis = match () {
+  let rotate_by = match () {
     // TODO: Make controls configurable.
-    () if keyboard.just_pressed(KeyCode::KeyW) => Direction::NegX,
+    () if keyboard.just_pressed(KeyCode::KeyW) => IVec3::X,
     // TODO: Make controls configurable.
-    () if keyboard.just_pressed(KeyCode::KeyS) => Direction::X,
+    () if keyboard.just_pressed(KeyCode::KeyS) => IVec3::NEG_X,
     // TODO: Make controls configurable.
-    () if keyboard.just_pressed(KeyCode::KeyA) => Direction::NegZ,
+    () if keyboard.just_pressed(KeyCode::KeyA) => IVec3::NEG_Z,
     // TODO: Make controls configurable.
-    () if keyboard.just_pressed(KeyCode::KeyD) => Direction::Z,
+    () if keyboard.just_pressed(KeyCode::KeyD) => IVec3::Z,
     // TODO: Make controls configurable.
-    () if keyboard.just_pressed(KeyCode::KeyQ) => Direction::NegY,
+    () if keyboard.just_pressed(KeyCode::KeyQ) => IVec3::Y,
     // TODO: Make controls configurable.
-    () if keyboard.just_pressed(KeyCode::KeyE) => Direction::Y,
+    () if keyboard.just_pressed(KeyCode::KeyE) => IVec3::NEG_Y,
     _ => return,
   };
 
   messages.write(ActionMessage::Push(Box::new(CombinedAction::from_iter(
     query
       .iter()
-      .map(|entity| Box::new(RotateAction { entity, axis }) as _),
+      .map(|entity| Box::new(RotateAction { entity, rotate_by }) as _),
   ))));
 }
 
