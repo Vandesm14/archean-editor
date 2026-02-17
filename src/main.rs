@@ -168,12 +168,12 @@ fn show_editor_ui(mut contexts: EguiContexts) -> Result {
     ui.separator();
 
     ui.heading("Rotation");
-    ui.label("<W> to rotate counter-clockwise on the X axis.");
-    ui.label("<S> to rotate clockwise on the X axis.");
-    ui.label("<A> to rotate clockwise on the Z axis.");
-    ui.label("<D> to rotate counter-clockwise on the Z axis.");
-    ui.label("<Q> to rotate counter-clockwise on the Y axis.");
-    ui.label("<E> to rotate clockwise on the Y axis.");
+    ui.label("<W> to rotate clockwise on the X axis.");
+    ui.label("<S> to rotate counter-clockwise on the X axis.");
+    ui.label("<A> to rotate counter-clockwise on the Z axis.");
+    ui.label("<D> to rotate clockwise on the Z axis.");
+    ui.label("<Q> to rotate clockwise on the Y axis.");
+    ui.label("<E> to rotate counter-clockwise on the Y axis.");
   });
 
   Ok(())
@@ -242,17 +242,17 @@ fn rotate_blocks(
 ) {
   let rotate_by = match () {
     // TODO: Make controls configurable.
-    () if keyboard.just_pressed(KeyCode::KeyW) => IVec3::X,
+    () if keyboard.just_pressed(KeyCode::KeyW) => IVec3::NEG_X,
     // TODO: Make controls configurable.
-    () if keyboard.just_pressed(KeyCode::KeyS) => IVec3::NEG_X,
+    () if keyboard.just_pressed(KeyCode::KeyS) => IVec3::X,
     // TODO: Make controls configurable.
-    () if keyboard.just_pressed(KeyCode::KeyA) => IVec3::NEG_Z,
+    () if keyboard.just_pressed(KeyCode::KeyA) => IVec3::Y,
     // TODO: Make controls configurable.
-    () if keyboard.just_pressed(KeyCode::KeyD) => IVec3::Z,
+    () if keyboard.just_pressed(KeyCode::KeyD) => IVec3::NEG_Y,
     // TODO: Make controls configurable.
-    () if keyboard.just_pressed(KeyCode::KeyQ) => IVec3::Y,
+    () if keyboard.just_pressed(KeyCode::KeyQ) => IVec3::Z,
     // TODO: Make controls configurable.
-    () if keyboard.just_pressed(KeyCode::KeyE) => IVec3::NEG_Y,
+    () if keyboard.just_pressed(KeyCode::KeyE) => IVec3::NEG_Z,
     _ => return,
   };
 
