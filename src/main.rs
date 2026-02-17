@@ -88,7 +88,7 @@ fn main() -> AppExit {
         undo_redo,
         reload_blueprint,
         orbit,
-        press_translate_key,
+        translate_blocks,
         rotate_blocks,
       ),
     )
@@ -256,50 +256,35 @@ fn rotate_blocks(
   ))));
 }
 
-fn press_translate_key(
+fn translate_blocks(
   key: Res<ButtonInput<KeyCode>>,
   selected: Query<Entity, With<Selected>>,
   mut actions: MessageWriter<ActionMessage>,
 ) {
-  let mut translate_by = IVec3::ZERO;
+  let translate_by = match () {
+    // TODO: Make controls configurable.
+    () if key.just_pressed(KeyCode::ArrowRight) => IVec3::X,
+    // TODO: Make controls configurable.
+    () if key.just_pressed(KeyCode::ArrowLeft) => IVec3::NEG_X,
+    // TODO: Make controls configurable.
+    () if key.just_pressed(KeyCode::ArrowUp) => IVec3::NEG_Z,
+    // TODO: Make controls configurable.
+    () if key.just_pressed(KeyCode::ArrowDown) => IVec3::Z,
+    // TODO: Make controls configurable.
+    () if key.just_pressed(KeyCode::PageUp) => IVec3::Y,
+    // TODO: Make controls configurable.
+    () if key.just_pressed(KeyCode::PageDown) => IVec3::NEG_Y,
+    _ => return,
+  };
 
-  // TODO: Make controls configurable.
-  if key.just_pressed(KeyCode::ArrowRight) {
-    translate_by = IVec3::X;
-  }
-  // TODO: Make controls configurable.
-  if key.just_pressed(KeyCode::ArrowLeft) {
-    translate_by = IVec3::NEG_X;
-  }
-
-  // TODO: Make controls configurable.
-  if key.just_pressed(KeyCode::ArrowUp) {
-    translate_by = IVec3::NEG_Z;
-  }
-  // TODO: Make controls configurable.
-  if key.just_pressed(KeyCode::ArrowDown) {
-    translate_by = IVec3::Z;
-  }
-
-  // TODO: Make controls configurable.
-  if key.just_pressed(KeyCode::PageUp) {
-    translate_by = IVec3::Y;
-  }
-  // TODO: Make controls configurable.
-  if key.just_pressed(KeyCode::PageDown) {
-    translate_by = IVec3::NEG_Y;
-  }
-
-  if translate_by != IVec3::ZERO {
-    actions.write(ActionMessage::Push(Box::new(CombinedAction::from_iter(
-      selected.iter().map(|entity| {
-        Box::new(TranslateAction {
-          entity,
-          translate_by,
-        }) as _
-      }),
-    ))));
-  }
+  actions.write(ActionMessage::Push(Box::new(CombinedAction::from_iter(
+    selected.iter().map(|entity| {
+      Box::new(TranslateAction {
+        entity,
+        translate_by,
+      }) as _
+    }),
+  ))));
 }
 
 // fn setup_zoo(mut commands: Commands, common_assets: Res<CommonAssets>) {
