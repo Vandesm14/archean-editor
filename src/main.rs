@@ -214,9 +214,9 @@ fn setup_blueprint(
         Block::from_raw(block.r#type).unwrap_or(Block::CUBE),
         BlockTransform {
           translation: IVec3::new(
-            block.frame_x as i32 * FRAME_SIZE + 2 * block.pos_x as i32,
-            block.frame_y as i32 * FRAME_SIZE + 2 * block.pos_y as i32,
-            block.frame_z as i32 * FRAME_SIZE + 2 * block.pos_z as i32,
+            block.frame_x as i32 * FRAME_SIZE + block.pos_x as i32,
+            block.frame_y as i32 * FRAME_SIZE + block.pos_y as i32,
+            block.frame_z as i32 * FRAME_SIZE + block.pos_z as i32,
           ),
           scale: IVec3::new(size_x as i32, size_y as i32, size_z as i32),
         },

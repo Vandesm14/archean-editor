@@ -18,7 +18,7 @@ pub fn sync_block_transforms(
   >,
 ) {
   for (mut transform, block, block_transform) in query {
-    transform.translation = block_transform.translation.as_vec3() * 0.5
+    transform.translation = block_transform.translation.as_vec3()
       + block_transform.scale.as_vec3() * 0.5;
     transform.scale = block_transform.scale.as_vec3();
     transform.rotation = block.rotation();
