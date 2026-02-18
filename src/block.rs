@@ -11,21 +11,6 @@ impl Plugin for BlockPlugin {
   }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default, Component)]
-pub struct Block;
-
-impl Block {
-  /// Returns the translation of the frame that contains `transform`.
-  pub fn frame_translation(transform: Transform) -> IVec3 {
-    transform.translation.as_ivec3() / FRAME_SIZE_IVEC3
-  }
-
-  /// Returns the translation of `transform` in the frame that contains it.
-  pub fn frame_relative_translation(transform: Transform) -> IVec3 {
-    transform.translation.as_ivec3() % FRAME_SIZE_IVEC3
-  }
-}
-
 #[derive(Debug, Resource)]
 pub struct BlockAssets {
   meshes: [Handle<Mesh>; 53],

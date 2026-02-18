@@ -211,6 +211,7 @@ dependencies = [
  "bevy_egui",
  "bevy_obj",
  "serde",
+ "serde_json",
 ]
 
 [[package]]

@@ -1,6 +1,8 @@
 use bevy::{platform::collections::HashMap, prelude::*};
 use serde::{Deserialize, Serialize};
 
+use crate::block::FRAME_SIZE_VEC3;
+
 #[derive(Debug, Component)]
 pub struct BlockMarker;
 
@@ -65,7 +67,7 @@ pub struct CoordsW {
   pub z: f64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Component)]
 pub struct Block {
   pub colors: (u8, u8, u8, u8, u8, u8, u8),
   pub extra: u8,
@@ -73,13 +75,25 @@ pub struct Block {
   pub frame_y: i8,
   pub frame_z: i8,
   pub material: u8,
-  pub pos_x: u8,
-  pub pos_y: u8,
-  pub pos_z: u8,
+  pub pos_x: i8,
+  pub pos_y: i8,
+  pub pos_z: i8,
   pub size_x: u8,
   pub size_y: u8,
   pub size_z: u8,
   pub r#type: u8,
+}
+
+impl Block {
+  /// Returns the translation of the frame that contains `transform`.
+  pub fn frame_translation(transform: Transform) -> Vec3 {
+    transform.translation / FRAME_SIZE_VEC3
+  }
+
+  /// Returns the translation of `transform` in the frame that contains it.
+  pub fn frame_relative_translation(transform: Transform) -> Vec3 {
+    transform.translation % FRAME_SIZE_VEC3
+  }
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]

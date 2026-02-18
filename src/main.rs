@@ -1,4 +1,5 @@
 use core::{f32::consts::FRAC_PI_2, ops::Range};
+use std::{fs, path::Path};
 
 use archean_editor::{
   CommonAssets, Selected,
@@ -6,8 +7,10 @@ use archean_editor::{
     ActionHistory, ActionMessage, ActionPlugin, CombinedAction, RotateAction,
     TranslateAction,
   },
-  block::{Block, BlockAssets, BlockPlugin, FRAME_SIZE_VEC3},
-  blueprint::{Blueprint, BlueprintPlugin, BlueprintState, LoadedBlueprint},
+  block::{BlockAssets, BlockPlugin, FRAME_SIZE_VEC3},
+  blueprint::{
+    Block, Blueprint, BlueprintPlugin, BlueprintState, LoadedBlueprint,
+  },
   select_entity, swap_to_deselected_material, swap_to_selected_material,
 };
 use bevy::{
@@ -88,6 +91,7 @@ fn main() -> AppExit {
         orbit,
         translate_blocks,
         rotate_blocks,
+        save_blueprint,
       ),
     )
     .run()
@@ -211,7 +215,7 @@ fn setup_blueprint(
 
     commands
       .spawn((
-        Block,
+        block.clone(),
         Mesh3d(block_assets.mesh(block.r#type)),
         MeshMaterial3d(common_assets.unselected.clone()),
         Transform::from_xyz(
@@ -240,19 +244,21 @@ fn rotate_blocks(
   query: Query<Entity, With<Selected>>,
   mut messages: MessageWriter<ActionMessage>,
 ) {
+  let ctrl = keyboard.pressed(KeyCode::ControlLeft)
+    || keyboard.pressed(KeyCode::ControlRight);
   let rotate_by = match () {
     // TODO: Make controls configurable.
-    () if keyboard.just_pressed(KeyCode::KeyW) => IVec3::NEG_X,
+    () if !ctrl && keyboard.just_pressed(KeyCode::KeyW) => IVec3::NEG_X,
     // TODO: Make controls configurable.
-    () if keyboard.just_pressed(KeyCode::KeyS) => IVec3::X,
+    () if !ctrl && keyboard.just_pressed(KeyCode::KeyS) => IVec3::X,
     // TODO: Make controls configurable.
-    () if keyboard.just_pressed(KeyCode::KeyA) => IVec3::Y,
+    () if !ctrl && keyboard.just_pressed(KeyCode::KeyA) => IVec3::Y,
     // TODO: Make controls configurable.
-    () if keyboard.just_pressed(KeyCode::KeyD) => IVec3::NEG_Y,
+    () if !ctrl && keyboard.just_pressed(KeyCode::KeyD) => IVec3::NEG_Y,
     // TODO: Make controls configurable.
-    () if keyboard.just_pressed(KeyCode::KeyQ) => IVec3::Z,
+    () if !ctrl && keyboard.just_pressed(KeyCode::KeyQ) => IVec3::Z,
     // TODO: Make controls configurable.
-    () if keyboard.just_pressed(KeyCode::KeyE) => IVec3::NEG_Z,
+    () if !ctrl && keyboard.just_pressed(KeyCode::KeyE) => IVec3::NEG_Z,
     _ => return,
   };
 
@@ -268,19 +274,21 @@ fn translate_blocks(
   selected: Query<Entity, With<Selected>>,
   mut actions: MessageWriter<ActionMessage>,
 ) {
+  let ctrl =
+    key.pressed(KeyCode::ControlLeft) || key.pressed(KeyCode::ControlRight);
   let translate_by = match () {
     // TODO: Make controls configurable.
-    () if key.just_pressed(KeyCode::ArrowRight) => IVec3::X,
+    () if !ctrl && key.just_pressed(KeyCode::ArrowRight) => IVec3::X,
     // TODO: Make controls configurable.
-    () if key.just_pressed(KeyCode::ArrowLeft) => IVec3::NEG_X,
+    () if !ctrl && key.just_pressed(KeyCode::ArrowLeft) => IVec3::NEG_X,
     // TODO: Make controls configurable.
-    () if key.just_pressed(KeyCode::ArrowUp) => IVec3::NEG_Z,
+    () if !ctrl && key.just_pressed(KeyCode::ArrowUp) => IVec3::NEG_Z,
     // TODO: Make controls configurable.
-    () if key.just_pressed(KeyCode::ArrowDown) => IVec3::Z,
+    () if !ctrl && key.just_pressed(KeyCode::ArrowDown) => IVec3::Z,
     // TODO: Make controls configurable.
-    () if key.just_pressed(KeyCode::PageUp) => IVec3::Y,
+    () if !ctrl && key.just_pressed(KeyCode::PageUp) => IVec3::Y,
     // TODO: Make controls configurable.
-    () if key.just_pressed(KeyCode::PageDown) => IVec3::NEG_Y,
+    () if !ctrl && key.just_pressed(KeyCode::PageDown) => IVec3::NEG_Y,
     _ => return,
   };
 
@@ -393,6 +401,54 @@ fn reload_blueprint(
     action_history.clear();
     if let Some(path) = blueprint.path() {
       asset_server.reload(path);
+    }
+  }
+}
+
+fn save_blueprint(
+  key: Res<ButtonInput<KeyCode>>,
+  blueprints: Res<Assets<Blueprint>>,
+  loaded_blueprint: Res<LoadedBlueprint>,
+  blocks: Query<(&Block, &Transform)>,
+) {
+  let blueprint = blueprints.get(loaded_blueprint.id()).unwrap();
+
+  if key.pressed(KeyCode::ControlLeft) && key.just_pressed(KeyCode::KeyS) {
+    let mut blueprint = blueprint.clone();
+    blueprint.data.blocks = blocks
+      .iter()
+      .map(|(block, transform)| {
+        let mut block = block.clone();
+        let frame_pos = Block::frame_translation(*transform);
+        let frame_rel_pos = Block::frame_relative_translation(*transform);
+
+        block.pos_x =
+          (frame_rel_pos.x - (block.size_x as f32 + 1.0) * 0.5) as i8;
+        block.pos_y =
+          (frame_rel_pos.y - (block.size_y as f32 + 1.0) * 0.5) as i8;
+        block.pos_z =
+          (frame_rel_pos.z - (block.size_z as f32 + 1.0) * 0.5) as i8;
+
+        block.frame_x = frame_pos.x as i8;
+        block.frame_y = frame_pos.y as i8;
+        block.frame_z = frame_pos.z as i8;
+
+        block
+      })
+      .collect();
+
+    if let Some(path) = loaded_blueprint.path() {
+      match serde_json::to_string(&blueprint) {
+        Ok(str) => {
+          match fs::write(Path::new("assets").join(path.path()), &str) {
+            Ok(_) => {
+              info!("blueprint saved")
+            }
+            Err(err) => error!("failed to save blueprint: {err}"),
+          }
+        }
+        Err(err) => error!("failed to serialize blueprint: {err}"),
+      };
     }
   }
 }
