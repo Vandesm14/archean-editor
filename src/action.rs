@@ -275,3 +275,85 @@ impl Action for RotateAction {
     ActionResult::Success
   }
 }
+
+pub struct ScaleAction {
+  pub entity: Entity,
+  pub scale_direction: IVec3,
+  pub scale_delta: i32,
+}
+
+impl Action for ScaleAction {
+  fn redo(&self, world: &mut World) -> ActionResult {
+    let mut query = world.query::<&mut Transform>();
+
+    let Ok(mut transform) = query.get_mut(world, self.entity) else {
+      warn!("Could not find entity {} with Block component", self.entity);
+      return ActionResult::Failed;
+    };
+
+    let scale_direction = self.scale_direction.as_vec3();
+    let scale_delta = self.scale_delta as f32;
+
+    let scale_change = Vec3::new(
+      if scale_direction.x != 0.0 {
+        scale_delta
+      } else {
+        0.0
+      },
+      if scale_direction.y != 0.0 {
+        scale_delta
+      } else {
+        0.0
+      },
+      if scale_direction.z != 0.0 {
+        scale_delta
+      } else {
+        0.0
+      },
+    );
+
+    let diff = transform.scale + scale_change;
+    if diff.x < 1.0 || diff.y < 1.0 || diff.z < 1.0 {
+      return ActionResult::Failed;
+    }
+
+    let translation_change = scale_direction * scale_delta * 0.5;
+    transform.scale += scale_change;
+    transform.translation += translation_change;
+
+    ActionResult::Success
+  }
+
+  fn undo(&self, world: &mut World) -> ActionResult {
+    let mut query = world.query::<&mut Transform>();
+
+    let Ok(mut transform) = query.get_mut(world, self.entity) else {
+      warn!("Could not find entity {} for ScaleAction", self.entity);
+      return ActionResult::Failed;
+    };
+
+    let scale_change = IVec3::new(
+      if self.scale_direction.x != 0 {
+        self.scale_delta
+      } else {
+        0
+      },
+      if self.scale_direction.y != 0 {
+        self.scale_delta
+      } else {
+        0
+      },
+      if self.scale_direction.z != 0 {
+        self.scale_delta
+      } else {
+        0
+      },
+    );
+    let translation_change = self.scale_direction * self.scale_delta;
+
+    transform.scale -= scale_change.as_vec3();
+    transform.translation -= translation_change.as_vec3();
+
+    ActionResult::Success
+  }
+}

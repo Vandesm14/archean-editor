@@ -5,7 +5,7 @@ use archean_editor::{
   CommonAssets, Selected,
   action::{
     ActionHistory, ActionMessage, ActionPlugin, CombinedAction, RotateAction,
-    TranslateAction,
+    ScaleAction, TranslateAction,
   },
   block::{BlockAssets, BlockPlugin, FRAME_SIZE_VEC3},
   blueprint::{
@@ -91,6 +91,7 @@ fn main() -> AppExit {
         reload_blueprint,
         orbit,
         translate_blocks,
+        scale_blocks,
         rotate_blocks,
         save_blueprint,
       ),
@@ -170,6 +171,23 @@ fn show_editor_ui(mut contexts: EguiContexts) -> Result {
     ui.label("<ArrowRight> to translate on the +X axis.");
     ui.label("<PageUp> to translate on the +Y axis.");
     ui.label("<PageDown> to translate on the -Y axis.");
+
+    ui.separator();
+
+    ui.heading("Scale");
+    ui.label("<Control+ArrowLeft> to grow scale on the -X axis.");
+    ui.label("<Control+ArrowRight> to grow scale on the +X axis.");
+    ui.label("<Control+ArrowUp> to grow scale on the -Z axis.");
+    ui.label("<Control+ArrowDown> to grow scale on the +Z axis.");
+    ui.label("<Control+PageUp> to grow scale on the +Y axis.");
+    ui.label("<Control+PageDown> to grow scale on the -Y axis.");
+    ui.label("");
+    ui.label("<Control+Shift+ArrowLeft> to shrink scale on the -X axis.");
+    ui.label("<Control+Shift+ArrowRight> to shrink scale on the +X axis.");
+    ui.label("<Control+Shift+ArrowUp> to shrink scale on the -Z axis.");
+    ui.label("<Control+Shift+ArrowDown> to shrink scale on the +Z axis.");
+    ui.label("<Control+Shift+PageUp> to shrink scale on the +Y axis.");
+    ui.label("<Control+Shift+PageDown> to shrink scale on the -Y axis.");
 
     ui.separator();
 
@@ -268,6 +286,47 @@ fn rotate_blocks(
     query
       .iter()
       .map(|entity| Box::new(RotateAction { entity, rotate_by }) as _),
+  ))));
+}
+
+fn scale_blocks(
+  key: Res<ButtonInput<KeyCode>>,
+  selected: Query<Entity, With<Selected>>,
+  mut actions: MessageWriter<ActionMessage>,
+) {
+  let ctrl =
+    key.pressed(KeyCode::ControlLeft) || key.pressed(KeyCode::ControlRight);
+  let shift =
+    key.pressed(KeyCode::ShiftLeft) || key.pressed(KeyCode::ShiftRight);
+
+  if !ctrl {
+    return;
+  }
+
+  let (scale_direction, scale_delta) = match () {
+    () if !shift && key.just_pressed(KeyCode::ArrowLeft) => (IVec3::NEG_X, 1),
+    () if shift && key.just_pressed(KeyCode::ArrowLeft) => (IVec3::NEG_X, -1),
+    () if !shift && key.just_pressed(KeyCode::ArrowRight) => (IVec3::X, 1),
+    () if shift && key.just_pressed(KeyCode::ArrowRight) => (IVec3::X, -1),
+    () if !shift && key.just_pressed(KeyCode::ArrowUp) => (IVec3::NEG_Z, 1),
+    () if shift && key.just_pressed(KeyCode::ArrowUp) => (IVec3::NEG_Z, -1),
+    () if !shift && key.just_pressed(KeyCode::ArrowDown) => (IVec3::Z, 1),
+    () if shift && key.just_pressed(KeyCode::ArrowDown) => (IVec3::Z, -1),
+    () if !shift && key.just_pressed(KeyCode::PageUp) => (IVec3::Y, 1),
+    () if shift && key.just_pressed(KeyCode::PageUp) => (IVec3::Y, -1),
+    () if !shift && key.just_pressed(KeyCode::PageDown) => (IVec3::NEG_Y, 1),
+    () if shift && key.just_pressed(KeyCode::PageDown) => (IVec3::NEG_Y, -1),
+    _ => return,
+  };
+
+  actions.write(ActionMessage::Push(Box::new(CombinedAction::from_iter(
+    selected.iter().map(|entity| {
+      Box::new(ScaleAction {
+        entity,
+        scale_direction,
+        scale_delta,
+      }) as _
+    }),
   ))));
 }
 
