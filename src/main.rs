@@ -486,8 +486,8 @@ fn save_blueprint(
 
         let U8Vec3 { x, y, z } = (transform.scale - 1.0).as_u8vec3();
         block.size_x = x;
-        block.size_x = y;
-        block.size_x = z;
+        block.size_y = y;
+        block.size_z = z;
 
         block.pos_x =
           (frame_rel_pos.x - (block.size_x as f32 + 1.0) * 0.5) as i8;
