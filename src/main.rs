@@ -153,6 +153,7 @@ fn show_editor_ui(mut contexts: EguiContexts) -> Result {
 
     ui.heading("Blueprint");
     ui.label("<Control+R> to reload the blueprint file.");
+    ui.label("<Control+S> to save the blueprint file.");
 
     ui.separator();
 
@@ -414,6 +415,7 @@ fn save_blueprint(
 ) {
   let blueprint = blueprints.get(loaded_blueprint.id()).unwrap();
 
+  // TODO: Make controls configurable.
   if key.pressed(KeyCode::ControlLeft) && key.just_pressed(KeyCode::KeyS) {
     let mut blueprint = blueprint.clone();
     blueprint.data.blocks = blocks
