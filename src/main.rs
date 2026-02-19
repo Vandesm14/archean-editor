@@ -16,6 +16,7 @@ use archean_editor::{
 use bevy::{
   camera::{CameraOutputMode, visibility::RenderLayers},
   input::mouse::{AccumulatedMouseMotion, AccumulatedMouseScroll},
+  math::U8Vec3,
   pbr::wireframe::{Wireframe, WireframeConfig, WireframePlugin},
   prelude::*,
   render::render_resource::BlendState,
@@ -421,6 +422,11 @@ fn save_blueprint(
         let mut block = block.clone();
         let frame_pos = Block::frame_translation(*transform);
         let frame_rel_pos = Block::frame_relative_translation(*transform);
+
+        let U8Vec3 { x, y, z } = (transform.scale - 1.0).as_u8vec3();
+        block.size_x = x;
+        block.size_x = y;
+        block.size_x = z;
 
         block.pos_x =
           (frame_rel_pos.x - (block.size_x as f32 + 1.0) * 0.5) as i8;
