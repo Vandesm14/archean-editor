@@ -70,6 +70,7 @@ pub struct CoordsW {
 #[derive(Debug, Clone, Serialize, Deserialize, Component)]
 pub struct Block {
   pub colors: (u8, u8, u8, u8, u8, u8, u8),
+  #[serde(default)]
   pub extra: u8,
   pub frame_x: i8,
   pub frame_y: i8,
