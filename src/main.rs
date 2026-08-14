@@ -110,7 +110,7 @@ fn setup_scene(mut commands: Commands) {
   commands.spawn((
     DirectionalLight {
       illuminance: 10000.0,
-      shadows_enabled: true,
+      shadow_maps_enabled: true,
       ..Default::default()
     },
     Transform::from_translation(Vec3::ONE * 10.0)
